@@ -68,24 +68,39 @@ class Writer {
 	 *
 	 * @param string $content        	
 	 */
-	public function write($content) {
-		$lines = explode("\n", $content);
-		for ($i = 0, $c = count($lines); $i < $c; $i++) {
-			if ($this->indentationLevel > 0
-					&& !empty($lines[$i])
-					&& (empty($this->content) || "\n" === substr($this->content, -1))) {
-				$this->content .= str_repeat($this->indentation, $this->indentationLevel);
-			}
+	 public function write($content) {
+ 		$tokens = token_get_all('<?php ' . $content);
+ 		
+ 		$heredocEndLines = [];
+ 		
+ 		foreach ($tokens as $line => $token) {
+ 		    if (is_array($token)) {
+ 				if (token_name($token[0]) === 'T_END_HEREDOC') {
+ 		        	$heredocEndLines[] = $token[2] - 1;
+ 				}
+ 		    }
+ 		}
+ 		
+ 		$lines = explode("\n", $content);
+ 		
+ 		for ($i = 0, $c = count($lines); $i < $c; $i++) {
+ 			if (!in_array($i, $heredocEndLines)) {
+ 				if ($this->indentationLevel > 0
+ 						&& !empty($lines[$i])
+ 						&& (empty($this->content) || "\n" === substr($this->content, -1))) {
+ 					$this->content .= str_repeat($this->indentation, $this->indentationLevel);
+ 				}
+ 			}
+ 			
+ 			$this->content .= $lines[$i];
 
-			$this->content .= $lines[$i];
+ 			if ($i + 1 < $c) {
+ 				$this->content .= "\n";
+ 			}
+ 		}
 
-			if ($i + 1 < $c) {
-				$this->content .= "\n";
-			}
-		}
-
-		return $this;
-	}
+ 		return $this;
+ 	}
 
 	public function rtrim() {
 		$addNl = "\n" === substr($this->content, -1);
