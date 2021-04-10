@@ -1,9 +1,19 @@
-<?php
-declare(strict_types=1);
+<?php declare(strict_types=1);
+/*
+ * This file is part of the php-code-generator package.
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @license Apache-2.0
+ */
 
 namespace gossi\codegen\parser\visitor;
 
+use gossi\codegen\model\AbstractPhpMember;
 use gossi\codegen\model\AbstractPhpStruct;
+use gossi\codegen\model\PhpClass;
+use gossi\codegen\model\PhpConstant;
+use gossi\codegen\model\PhpTrait;
 use PhpParser\Comment\Doc;
 use PhpParser\Node\Const_;
 use PhpParser\Node\Stmt\Class_;
@@ -18,8 +28,7 @@ use PhpParser\Node\Stmt\TraitUse;
 use PhpParser\Node\Stmt\UseUse;
 
 class StructParserVisitor implements ParserVisitorInterface {
-
-	protected $struct;
+	protected AbstractPhpStruct $struct;
 
 	/**
 	 * @return AbstractPhpStruct
@@ -32,25 +41,56 @@ class StructParserVisitor implements ParserVisitorInterface {
 		$this->struct = $struct;
 	}
 
-	public function visitStruct(ClassLike $node) {}
+	public function parseDocblock(AbstractPhpStruct|AbstractPhpMember|PhpConstant $model, ?Doc $doc = null): void {
+		if ($doc !== null) {
+			$model->setDocblock($doc->getReformattedText());
+			$docblock = $model->getDocblock();
+			$model->setDescription($docblock->getShortDescription());
+			$model->setLongDescription($docblock->getLongDescription());
+		}
+	}
 
-	public function visitClass(Class_ $node) {}
+	public function visitStruct(ClassLike $node): void {
+		$this->struct->setName($node->name->name);
+		$this->parseDocblock($this->struct, $node->getDocComment());
+	}
 
-	public function visitInterface(Interface_ $node) {}
+	public function visitTraitUse(TraitUse $node): void {
+		foreach ($node->traits as $trait) {
+			if ($this->struct instanceof PhpClass || $this->struct instanceof PhpTrait) {
+				$this->struct->addTrait(implode('\\', $trait->parts));
+			}
+		}
+	}
 
-	public function visitTrait(Trait_ $node) {}
+	public function visitNamespace(Namespace_ $node): void {
+		if ($node->name !== null) {
+			$this->struct->setNamespace(implode('\\', $node->name->parts));
+		}
+	}
 
-	public function visitTraitUse(TraitUse $node) {}
+	public function visitUseStatement(UseUse $node): void {
+		$this->struct->addUseStatement(implode('\\', $node->name->parts), (string) $node->alias?->name);
+	}
 
-	public function visitConstants(ClassConst $node) {}
+	public function visitClass(Class_ $node): void {
+	}
 
-	public function visitConstant(Const_ $node, Doc $doc = null) {}
+	public function visitInterface(Interface_ $node): void {
+	}
 
-	public function visitProperty(Property $node) {}
+	public function visitTrait(Trait_ $node): void {
+	}
 
-	public function visitNamespace(Namespace_ $node) {}
+	public function visitConstants(ClassConst $node): void {
+	}
 
-	public function visitUseStatement(UseUse $node) {}
+	public function visitConstant(Const_ $node, Doc $doc = null): void {
+	}
 
-	public function visitMethod(ClassMethod $node) {}
+	public function visitProperty(Property $node): void {
+	}
+
+	public function visitMethod(ClassMethod $node): void {
+	}
 }

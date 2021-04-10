@@ -1,0 +1,12 @@
+<?php
+
+{% if config.declareStrictTypes %}declare(strict_types=1);{% endif %}
+
+{% if not config.headerComment.isEmpty -%}
+    {{ config.headerComment|replace({'/**': '/*'}) }}
+{% endif %}
+{% if not config.headerDocblock.isEmpty -%}
+    {{ config.headerDocblock }}
+{% endif %}
+
+{{ content }}

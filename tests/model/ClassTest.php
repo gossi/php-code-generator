@@ -1,4 +1,12 @@
-<?php
+<?php declare(strict_types=1);
+/*
+ * This file is part of the php-code-generator package.
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @license Apache-2.0
+ */
+
 namespace gossi\codegen\tests\model;
 
 use gossi\codegen\model\PhpClass;
@@ -7,18 +15,15 @@ use gossi\codegen\model\PhpInterface;
 use gossi\codegen\model\PhpProperty;
 use gossi\codegen\model\PhpTrait;
 use gossi\codegen\tests\parts\ModelAssertions;
-use gossi\codegen\tests\parts\ValueTests;
 use PHPUnit\Framework\TestCase;
 
 /**
  * @group model
  */
 class ClassTest extends TestCase {
-
 	use ModelAssertions;
-	use ValueTests;
 
-	public function testConstants() {
+	public function testConstants(): void {
 		$class = new PhpClass();
 
 		$this->assertTrue($class->getConstants()->isEmpty());
@@ -37,7 +42,7 @@ class ClassTest extends TestCase {
 		$this->assertSame($class, $class->setConstant($bim = new PhpConstant('bim', 'bam')));
 		$this->assertTrue($class->hasConstant('bim'));
 		$this->assertSame($bim, $class->getConstant('bim'));
-		$this->assertSame($bim, $class->getConstant($bim));
+		$this->assertSame($bim, $class->getConstant((string) $bim));
 		$this->assertTrue($class->hasConstant($bim));
 		$this->assertSame($class, $class->removeConstant($bim));
 		$this->assertFalse($class->hasConstant($bim));
@@ -58,23 +63,21 @@ class ClassTest extends TestCase {
 		}
 	}
 
-	/**
-	 * @expectedException \InvalidArgumentException
-	 */
-	public function testRemoveConstantThrowsExceptionWhenConstantDoesNotExist() {
+	public function testRemoveConstantThrowsExceptionWhenConstantDoesNotExist(): void {
+		$this->expectException(\InvalidArgumentException::class);
+
 		$class = new PhpClass();
 		$class->removeConstant('foo');
 	}
 
-	/**
-	 * @expectedException \InvalidArgumentException
-	 */
-	public function testGetConstantThrowsExceptionWhenConstantDoesNotExist() {
+	public function testGetConstantThrowsExceptionWhenConstantDoesNotExist(): void {
+		$this->expectException(\InvalidArgumentException::class);
+
 		$class = new PhpClass();
 		$class->getConstant('foo');
 	}
 
-	public function testAbstract() {
+	public function testAbstract(): void {
 		$class = new PhpClass();
 
 		$this->assertFalse($class->isAbstract());
@@ -84,7 +87,7 @@ class ClassTest extends TestCase {
 		$this->assertFalse($class->isAbstract());
 	}
 
-	public function testFinal() {
+	public function testFinal(): void {
 		$class = new PhpClass();
 
 		$this->assertFalse($class->isFinal());
@@ -94,17 +97,17 @@ class ClassTest extends TestCase {
 		$this->assertFalse($class->isFinal());
 	}
 
-	public function testParentClassName() {
+	public function testParentClassName(): void {
 		$class = new PhpClass();
 
-		$this->assertNull($class->getParentClassName());
+		$this->assertEmpty($class->getParentClassName());
 		$this->assertSame($class, $class->setParentClassName('stdClass'));
 		$this->assertEquals('stdClass', $class->getParentClassName());
-		$this->assertSame($class, $class->setParentClassName(null));
-		$this->assertNull($class->getParentClassName());
+		$this->assertSame($class, $class->setParentClassName(''));
+		$this->assertEmpty($class->getParentClassName());
 	}
 
-	public function testInterfaces() {
+	public function testInterfaces(): void {
 		$class = new PhpClass('my\name\space\Class');
 
 		$this->assertFalse($class->hasInterfaces());
@@ -135,15 +138,16 @@ class ClassTest extends TestCase {
 		$this->assertSame($class, $class->removeInterface('other\name\space\Interface'));
 		$this->assertTrue($class->hasUseStatement('other\name\space\Interface'));
 
+		$class->getInterfaces()->clear();
 		$class->addInterface('\my\Interface');
 		$this->assertTrue($class->hasInterface('\my\Interface'));
 		$this->assertFalse($class->hasInterface('my\Interface'));
 	}
 
-	public function testTraits() {
+	public function testTraits(): void {
 		$class = new PhpClass('my\name\space\Class');
 
-		$this->assertEquals([], $class->getTraits());
+		$this->assertTrue($class->getTraits()->isEmpty());
 		$this->assertSame($class, $class->setTraits([
 			'foo',
 			'bar'
@@ -151,13 +155,13 @@ class ClassTest extends TestCase {
 		$this->assertEquals([
 			'foo',
 			'bar'
-		], $class->getTraits());
+		], $class->getTraits()->toArray());
 		$this->assertSame($class, $class->addTrait('stdClass'));
 		$this->assertEquals([
 			'foo',
 			'bar',
 			'stdClass'
-		], $class->getTraits());
+		], $class->getTraits()->toArray());
 
 		$trait = new PhpTrait('my\name\space\Trait');
 		$class->addTrait($trait);
@@ -176,7 +180,7 @@ class ClassTest extends TestCase {
 		$this->assertEquals(0, count($class->getTraits()));
 	}
 
-	public function testProperties() {
+	public function testProperties(): void {
 		$class = new PhpClass();
 
 		$this->assertTrue($class->getProperties()->isEmpty());
@@ -194,7 +198,7 @@ class ClassTest extends TestCase {
 		$class->setProperty($orphaned = new PhpProperty('orphaned'));
 		$this->assertSame($class, $orphaned->getParent());
 		$this->assertSame($orphaned, $class->getProperty('orphaned'));
-		$this->assertSame($orphaned, $class->getProperty($orphaned));
+		$this->assertSame($orphaned, $class->getProperty($orphaned->getName()));
 		$this->assertTrue($class->hasProperty($orphaned));
 		$this->assertSame($class, $class->setProperties([
 			$prop,
@@ -218,25 +222,23 @@ class ClassTest extends TestCase {
 		}
 	}
 
-	/**
-	 * @expectedException \InvalidArgumentException
-	 */
-	public function testRemoveNonExistentProperty() {
+	public function testRemoveNonExistentProperty(): void {
+		$this->expectException(\InvalidArgumentException::class);
+
 		$class = new PhpClass();
 		$class->removeProperty('haha');
 	}
 
-	public function testLongDescription() {
+	public function testLongDescription(): void {
 		$class = new PhpClass();
 
 		$this->assertSame($class, $class->setLongDescription('very long description'));
 		$this->assertEquals('very long description', $class->getLongDescription());
 	}
 
-	public function testDescripion() {
+	public function testDescription(): void {
 		$class = new PhpClass();
 		$class->setDescription(['multiline', 'description']);
 		$this->assertEquals("multiline\ndescription", $class->getDescription());
 	}
-
 }

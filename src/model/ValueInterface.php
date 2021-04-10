@@ -1,5 +1,11 @@
-<?php
-declare(strict_types=1);
+<?php declare(strict_types=1);
+/*
+ * This file is part of the php-code-generator package.
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @license Apache-2.0
+ */
 
 namespace gossi\codegen\model;
 
@@ -8,10 +14,11 @@ interface ValueInterface {
 	/**
 	 * Sets the value
 	 *
-	 * @param mixed $value
+	 * @param string|int|float|null|bool|PhpConstant $value
+	 *
 	 * @return $this
 	 */
-	public function setValue($value);
+	public function setValue(string|int|float|null|bool|PhpConstant $value);
 
 	/**
 	 * Unsets the value
@@ -23,9 +30,9 @@ interface ValueInterface {
 	/**
 	 * Returns the value
 	 *
-	 * @return mixed
+	 * @return string|int|float|null|bool|PhpConstant
 	 */
-	public function getValue();
+	public function getValue(): string|int|float|null|bool|PhpConstant;
 
 	/**
 	 * Checks whether a value or expression is set
@@ -45,6 +52,7 @@ interface ValueInterface {
 	 * Sets an expression
 	 *
 	 * @param string $expr
+	 *
 	 * @return $this
 	 */
 	public function setExpression(string $expr);
@@ -52,9 +60,9 @@ interface ValueInterface {
 	/**
 	 * Returns the expression
 	 *
-	 * @return string
+	 * @return mixed
 	 */
-	public function getExpression(): ?string;
+	public function getExpression(): mixed;
 
 	/**
 	 * Unsets the expression

@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /*
  * Copyright 2011 Johannes M. Schmitt <schmittjoh@gmail.com>
  *
@@ -14,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-declare(strict_types=1);
 
 namespace gossi\codegen\model;
 
@@ -30,20 +29,20 @@ use gossi\docblock\tags\ParamTag;
  * @author Thomas Gossmann
  */
 class PhpParameter extends AbstractModel implements ValueInterface {
-
 	use NamePart;
 	use TypePart;
 	use ValuePart;
 
-	private $passedByReference = false;
+	private bool $passedByReference = false;
 
 	/**
 	 * Creates a new PHP parameter.
 	 *
 	 * @param string $name the parameter name
+	 *
 	 * @return static
 	 */
-	public static function create($name = null) {
+	public static function create(string $name = ''): static {
 		return new static($name);
 	}
 
@@ -52,7 +51,7 @@ class PhpParameter extends AbstractModel implements ValueInterface {
 	 *
 	 * @param string $name the parameter name
 	 */
-	public function __construct($name = null) {
+	public function __construct(string $name = '') {
 		$this->setName($name);
 	}
 
@@ -60,9 +59,10 @@ class PhpParameter extends AbstractModel implements ValueInterface {
 	 * Sets whether this parameter is passed by reference
 	 *
 	 * @param bool $bool `true` if passed by reference and `false` if not
+	 *
 	 * @return $this
 	 */
-	public function setPassedByReference(bool $bool) {
+	public function setPassedByReference(bool $bool): static {
 		$this->passedByReference = $bool;
 
 		return $this;
@@ -93,10 +93,12 @@ class PhpParameter extends AbstractModel implements ValueInterface {
 	 * Alias for setDescription()
 	 *
 	 * @see #setDescription
+	 *
 	 * @param string $description
+	 *
 	 * @return $this
 	 */
-	public function setTypeDescription(?string $description) {
+	public function setTypeDescription(string $description): static {
 		return $this->setDescription($description);
 	}
 
@@ -104,9 +106,10 @@ class PhpParameter extends AbstractModel implements ValueInterface {
 	 * Alias for getDescription()
 	 *
 	 * @see #getDescription
+	 *
 	 * @return string
 	 */
-	public function getTypeDescription(): ?string {
+	public function getTypeDescription(): string {
 		return $this->getDescription();
 	}
 }

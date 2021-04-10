@@ -1,5 +1,11 @@
-<?php
-declare(strict_types=1);
+<?php declare(strict_types=1);
+/*
+ * This file is part of the php-code-generator package.
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @license Apache-2.0
+ */
 
 namespace gossi\codegen\model\parts;
 
@@ -13,7 +19,7 @@ namespace gossi\codegen\model\parts;
 trait FinalPart {
 
 	/** @var bool */
-	private $final = false;
+	private bool $final = false;
 
 	/**
 	 * Returns whether this is final
@@ -28,9 +34,10 @@ trait FinalPart {
 	 * Sets this final
 	 *
 	 * @param bool $final `true` for final and `false` if not
+	 *
 	 * @return $this
 	 */
-	public function setFinal(bool $final) {
+	public function setFinal(bool $final): self {
 		$this->final = $final;
 
 		return $this;

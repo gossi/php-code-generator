@@ -1,5 +1,11 @@
-<?php
-declare(strict_types=1);
+<?php declare(strict_types=1);
+/*
+ * This file is part of the php-code-generator package.
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @license Apache-2.0
+ */
 
 namespace gossi\codegen\model\parts;
 
@@ -16,7 +22,7 @@ use phootwork\collection\Set;
 trait InterfacesPart {
 
 	/** @var Set */
-	private $interfaces;
+	private Set $interfaces;
 
 	private function initInterfaces() {
 		$this->interfaces = new Set();
@@ -26,15 +32,17 @@ trait InterfacesPart {
 	 * Adds a use statement with an optional alias
 	 *
 	 * @param string $qualifiedName
-	 * @param null|string $alias
+	 * @param string $alias
+	 *
 	 * @return $this
 	 */
-	abstract public function addUseStatement(string $qualifiedName, string $alias = null);
+	abstract public function addUseStatement(string $qualifiedName, string $alias = '');
 
 	/**
 	 * Removes a use statement
 	 *
 	 * @param string $qualifiedName
+	 *
 	 * @return $this
 	 */
 	abstract public function removeUseStatement(string $qualifiedName);
@@ -44,7 +52,7 @@ trait InterfacesPart {
 	 *
 	 * @return string
 	 */
-	abstract public function getNamespace(): ?string;
+	abstract public function getNamespace(): string;
 
 	/**
 	 * Adds an interface.
@@ -53,9 +61,10 @@ trait InterfacesPart {
 	 * the interface is also added as use statement.
 	 *
 	 * @param PhpInterface|string $interface interface or qualified name
+	 *
 	 * @return $this
 	 */
-	public function addInterface($interface) {
+	public function addInterface(PhpInterface|string $interface) {
 		if ($interface instanceof PhpInterface) {
 			$name = $interface->getName();
 			$qname = $interface->getQualifiedName();
@@ -95,9 +104,10 @@ trait InterfacesPart {
 	 * Checks whether an interface exists
 	 *
 	 * @param PhpInterface|string $interface interface name or instance
+	 *
 	 * @return bool
 	 */
-	public function hasInterface($interface): bool {
+	public function hasInterface(PhpInterface|string $interface): bool {
 		if ($interface instanceof PhpInterface) {
 			return $this->interfaces->contains($interface->getName())
 				|| $this->interfaces->contains($interface->getQualifiedName());
@@ -113,9 +123,10 @@ trait InterfacesPart {
 	 * the interface is also remove from the use statements.
 	 *
 	 * @param PhpInterface|string $interface interface or qualified name
+	 *
 	 * @return $this
 	 */
-	public function removeInterface($interface) {
+	public function removeInterface(PhpInterface|string $interface): self {
 		if ($interface instanceof PhpInterface) {
 			$name = $interface->getName();
 			$qname = $interface->getQualifiedName();
@@ -133,13 +144,12 @@ trait InterfacesPart {
 	/**
 	 * Sets a collection of interfaces
 	 *
-	 * @param PhpInterface[] $interfaces
+	 * @param string[]|PhpInterface[] $interfaces
+	 *
 	 * @return $this
 	 */
-	public function setInterfaces(array $interfaces) {
-		foreach ($interfaces as $interface) {
-			$this->addInterface($interface);
-		}
+	public function setInterfaces(array $interfaces): self {
+		array_map([$this, 'addInterface'], $interfaces);
 
 		return $this;
 	}

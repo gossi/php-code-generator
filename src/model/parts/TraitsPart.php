@@ -1,9 +1,16 @@
-<?php
-declare(strict_types=1);
+<?php declare(strict_types=1);
+/*
+ * This file is part of the php-code-generator package.
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @license Apache-2.0
+ */
 
 namespace gossi\codegen\model\parts;
 
 use gossi\codegen\model\PhpTrait;
+use phootwork\collection\Set;
 
 /**
  * Traits part
@@ -14,22 +21,24 @@ use gossi\codegen\model\PhpTrait;
  */
 trait TraitsPart {
 
-	/** @var array */
-	private $traits = [];
+	/** @var Set */
+	private Set $traits;
 
 	/**
 	 * Adds a use statement with an optional alias
 	 *
 	 * @param string $qualifiedName
-	 * @param null|string $alias
+	 * @param string $alias
+	 *
 	 * @return $this
 	 */
-	abstract public function addUseStatement(string $qualifiedName, string $alias = null);
+	abstract public function addUseStatement(string $qualifiedName, string $alias = '');
 
 	/**
 	 * Removes a use statement
 	 *
 	 * @param string $qualifiedName
+	 *
 	 * @return $this
 	 */
 	abstract public function removeUseStatement(string $qualifiedName);
@@ -39,7 +48,11 @@ trait TraitsPart {
 	 *
 	 * @return string
 	 */
-	abstract public function getNamespace(): ?string;
+	abstract public function getNamespace(): string;
+
+	protected function initTraits(): void {
+		$this->traits = new Set();
+	}
 
 	/**
 	 * Adds a trait.
@@ -48,9 +61,10 @@ trait TraitsPart {
 	 * the trait is also added as use statement.
 	 *
 	 * @param PhpTrait|string $trait trait or qualified name
+	 *
 	 * @return $this
 	 */
-	public function addTrait($trait) {
+	public function addTrait(PhpTrait|string $trait): self {
 		if ($trait instanceof PhpTrait) {
 			$name = $trait->getName();
 			$qname = $trait->getQualifiedName();
@@ -63,9 +77,7 @@ trait TraitsPart {
 			$name = $trait;
 		}
 
-		if (!in_array($name, $this->traits)) {
-			$this->traits[] = $name;
-		}
+		$this->traits->add($name);
 
 		return $this;
 	}
@@ -73,9 +85,9 @@ trait TraitsPart {
 	/**
 	 * Returns a collection of traits
 	 *
-	 * @return string[]
+	 * @return Set
 	 */
-	public function getTraits() {
+	public function getTraits(): Set {
 		return $this->traits;
 	}
 
@@ -83,14 +95,16 @@ trait TraitsPart {
 	 * Checks whether a trait exists
 	 *
 	 * @param PhpTrait|string $trait
+	 *
 	 * @return bool `true` if it exists and `false` if not
 	 */
-	public function hasTrait($trait): bool {
-		if (!$trait instanceof PhpTrait) {
-			$trait = new PhpTrait($trait);
+	public function hasTrait(PhpTrait|string $trait): bool {
+		if ($trait instanceof PhpTrait) {
+			return $this->traits->contains($trait->getName())
+				|| $this->traits->contains($trait->getQualifiedName());
 		}
-		$name = $trait->getName();
-		return in_array($name, $this->traits);
+
+		return $this->traits->contains($trait) || $this->hasTrait(new PhpTrait($trait));
 	}
 
 	/**
@@ -100,24 +114,20 @@ trait TraitsPart {
 	 * the trait is also removed from use statements.
 	 *
 	 * @param PhpTrait|string $trait trait or qualified name
+	 *
 	 * @return $this
 	 */
-	public function removeTrait($trait) {
+	public function removeTrait(PhpTrait|string $trait): self {
 		if ($trait instanceof PhpTrait) {
 			$name = $trait->getName();
+			$qname = $trait->getQualifiedName();
+
+			$this->removeUseStatement($qname);
 		} else {
 			$name = $trait;
 		}
 
-		$index = array_search($name, $this->traits);
-		if ($index !== false) {
-			unset($this->traits[$index]);
-
-			if ($trait instanceof PhpTrait) {
-				$qname = $trait->getQualifiedName();
-				$this->removeUseStatement($qname);
-			}
-		}
+		$this->traits->remove($name);
 
 		return $this;
 	}
@@ -125,13 +135,12 @@ trait TraitsPart {
 	/**
 	 * Sets a collection of traits
 	 *
-	 * @param PhpTrait[] $traits
+	 * @param PhpTrait[]|string[] $traits
+	 *
 	 * @return $this
 	 */
-	public function setTraits(array $traits) {
-		foreach ($traits as $trait) {
-			$this->addTrait($trait);
-		}
+	public function setTraits(array $traits): self {
+		array_map([$this, 'addTrait'], $traits);
 
 		return $this;
 	}

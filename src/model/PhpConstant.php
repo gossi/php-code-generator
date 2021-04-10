@@ -1,5 +1,11 @@
-<?php
-declare(strict_types=1);
+<?php declare(strict_types=1);
+/*
+ * This file is part of the php-code-generator package.
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @license Apache-2.0
+ */
 
 namespace gossi\codegen\model;
 
@@ -18,7 +24,6 @@ use gossi\docblock\tags\VarTag;
  * @author Thomas Gossmann
  */
 class PhpConstant extends AbstractModel implements GenerateableInterface, DocblockInterface, ValueInterface {
-
 	use DocblockPart;
 	use LongDescriptionPart;
 	use NamePart;
@@ -32,9 +37,10 @@ class PhpConstant extends AbstractModel implements GenerateableInterface, Docblo
 	 * @param string $name
 	 * @param mixed $value
 	 * @param bool $isExpression
+	 *
 	 * @return static
 	 */
-	public static function create($name = null, $value = null, $isExpression = false) {
+	public static function create(string $name = '', mixed $value = null, bool $isExpression = false): static {
 		return new static($name, $value, $isExpression);
 	}
 
@@ -45,7 +51,7 @@ class PhpConstant extends AbstractModel implements GenerateableInterface, Docblo
 	 * @param mixed $value
 	 * @param bool $isExpression
 	 */
-	public function __construct($name = null, $value = null, $isExpression = false) {
+	public function __construct(string $name = '', mixed $value = null, bool $isExpression = false) {
 		$this->setName($name);
 
 		if ($isExpression) {

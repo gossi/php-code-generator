@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /*
  * Copyright 2011 Johannes M. Schmitt <schmittjoh@gmail.com>
  *
@@ -14,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-declare(strict_types=1);
 
 namespace gossi\codegen\model;
 
@@ -31,7 +30,6 @@ use gossi\docblock\Docblock;
  * @author Thomas Gossmann
  */
 abstract class AbstractPhpMember extends AbstractModel implements DocblockInterface {
-
 	use DocblockPart;
 	use LongDescriptionPart;
 	use NamePart;
@@ -59,13 +57,13 @@ abstract class AbstractPhpMember extends AbstractModel implements DocblockInterf
 	const VISIBILITY_PUBLIC = 'public';
 
 	/** @var bool */
-	private $static = false;
+	private bool $static = false;
 
 	/** @var string */
-	private $visibility = self::VISIBILITY_PUBLIC;
+	private string $visibility = self::VISIBILITY_PUBLIC;
 
-	/** @var AbstractPhpStruct */
-	private $parent;
+	/** @var ?AbstractPhpStruct */
+	private ?AbstractPhpStruct $parent = null;
 
 	/**
 	 * Creates a new member
@@ -83,10 +81,12 @@ abstract class AbstractPhpMember extends AbstractModel implements DocblockInterf
 	 * @see self::VISIBILITY_PUBLIC
 	 * @see self::VISIBILITY_PROTECTED
 	 * @see self::VISIBILITY_PRIVATE
+	 *
 	 * @param string $visibility the new visibility
+	 *
 	 * @return $this
 	 */
-	public function setVisibility(string $visibility) {
+	public function setVisibility(string $visibility): self {
 		if ($visibility !== self::VISIBILITY_PRIVATE
 				&& $visibility !== self::VISIBILITY_PROTECTED
 				&& $visibility !== self::VISIBILITY_PUBLIC) {
@@ -111,9 +111,10 @@ abstract class AbstractPhpMember extends AbstractModel implements DocblockInterf
 	 * Sets whether or not this member is static
 	 *
 	 * @param bool $static
+	 *
 	 * @return $this
 	 */
-	public function setStatic(bool $static) {
+	public function setStatic(bool $static): self {
 		$this->static = $static;
 
 		return $this;
@@ -132,11 +133,14 @@ abstract class AbstractPhpMember extends AbstractModel implements DocblockInterf
 	 * Sets the parent structure to which this member belongs
 	 *
 	 * @internal
+	 *
 	 * @param AbstractPhpStruct|null $parent
+	 *
 	 * @return $this
 	 */
-	public function setParent(?AbstractPhpStruct $parent) {
+	public function setParent(?AbstractPhpStruct $parent): self {
 		$this->parent = $parent;
+
 		return $this;
 	}
 
@@ -144,7 +148,8 @@ abstract class AbstractPhpMember extends AbstractModel implements DocblockInterf
 	 * Returns the parent structure to which this member belongs
 	 *
 	 * @internal
-	 * @return AbstractPhpStruct
+	 *
+	 * @return ?AbstractPhpStruct
 	 */
 	public function getParent(): ?AbstractPhpStruct {
 		return $this->parent;

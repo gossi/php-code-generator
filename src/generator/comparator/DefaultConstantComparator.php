@@ -1,5 +1,11 @@
-<?php
-declare(strict_types=1);
+<?php declare(strict_types=1);
+/*
+ * This file is part of the php-code-generator package.
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @license Apache-2.0
+ */
 
 namespace gossi\codegen\generator\comparator;
 
@@ -12,19 +18,25 @@ use phootwork\lang\Comparator;
  * Orders them by lower cased first, then upper cased
  */
 class DefaultConstantComparator implements Comparator {
-
-	private $comparator;
+	private DefaultUseStatementComparator $comparator;
 
 	public function __construct() {
 		$this->comparator = new DefaultUseStatementComparator();
 	}
 
 	/**
-	 * @param PhpConstant $a
-	 * @param PhpConstant $b
+	 * @param mixed $a
+	 * @param mixed $b
+	 *
+	 * @throws \TypeError
+	 *
+	 * @return int
 	 */
-	public function compare($a, $b) {
+	public function compare(mixed $a, mixed $b): int {
+		if (!($a instanceof PhpConstant) || !($b instanceof PhpConstant)) {
+			throw new \TypeError('DefaultConstantComparator::compare method compares PhpConstant objects only');
+		}
+
 		return $this->comparator->compare($a->getName(), $b->getName());
 	}
-
 }

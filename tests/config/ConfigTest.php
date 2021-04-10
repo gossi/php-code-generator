@@ -1,50 +1,57 @@
-<?php
+<?php declare(strict_types=1);
+/*
+ * This file is part of the php-code-generator package.
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @license Apache-2.0
+ */
+
 namespace gossi\codegen\tests\config;
 
-use gossi\code\profiles\Profile;
-use gossi\codegen\config\CodeFileGeneratorConfig;
 use gossi\codegen\config\CodeGeneratorConfig;
 use gossi\codegen\generator\CodeGenerator;
 use gossi\docblock\Docblock;
 use phootwork\lang\ComparableComparator;
 use phootwork\lang\Comparator;
+use phootwork\lang\Text;
 use PHPUnit\Framework\TestCase;
 
 /**
  * @group config
  */
 class ConfigTest extends TestCase {
-
-	public function testCodeGeneratorConfigDefaults() {
+	public function testDefaults(): void {
 		$config = new CodeGeneratorConfig();
 
 		$this->assertTrue($config->getGenerateDocblock());
 		$this->assertTrue($config->getGenerateEmptyDocblock());
-		$this->assertFalse($config->getGenerateScalarTypeHints());
-		$this->assertFalse($config->getGenerateReturnTypeHints());
+		$this->assertTrue($config->getGenerateTypeHints());
+		$this->assertTrue($config->getGenerateReturnTypeHints());
+		$this->assertTrue($config->getGeneratePropertyTypes());
 		$this->assertTrue($config->isSortingEnabled());
-		$this->assertFalse($config->isFormattingEnabled());
-		$this->assertTrue($config->getProfile() instanceof Profile);
+		$this->assertEquals('8.0', $config->getMinPhpVersion());
 		$this->assertEquals(CodeGenerator::SORT_USESTATEMENTS_DEFAULT, $config->getUseStatementSorting());
 		$this->assertEquals(CodeGenerator::SORT_CONSTANTS_DEFAULT, $config->getConstantSorting());
 		$this->assertEquals(CodeGenerator::SORT_PROPERTIES_DEFAULT, $config->getPropertySorting());
 		$this->assertEquals(CodeGenerator::SORT_METHODS_DEFAULT, $config->getMethodSorting());
+		$this->assertTrue($config->getHeaderComment()->isEmpty());
+		$this->assertTrue($config->getHeaderDocblock()->isEmpty());
+		$this->assertTrue($config->getDeclareStrictTypes());
+		$this->assertTrue($config->getGenerateReturnTypeHints());
+		$this->assertEquals('default', $config->getCodeStyle());
+		$this->assertEquals([realpath(__DIR__ . '/../../resources/templates/default')], $config->getTemplatesDirs());
 	}
 
-	public function testCodeGeneratorConfigDisableDocblock() {
+	public function testDisableDocblock(): void {
 		$config = new CodeGeneratorConfig(['generateDocblock' => false]);
 
 		$this->assertFalse($config->getGenerateDocblock());
 		$this->assertFalse($config->getGenerateEmptyDocblock());
-		$this->assertFalse($config->getGenerateScalarTypeHints());
-		$this->assertFalse($config->getGenerateReturnTypeHints());
 	}
 
-	public function testCodeGeneratorConfigSetters() {
+	public function testSetters(): void {
 		$config = new CodeGeneratorConfig();
-
-		$config->setProfile('psr-2');
-		$this->assertTrue($config->getProfile() instanceof Profile);
 
 		$config->setGenerateDocblock(false);
 		$this->assertFalse($config->getGenerateDocblock());
@@ -61,11 +68,8 @@ class ConfigTest extends TestCase {
 		$config->setGenerateReturnTypeHints(true);
 		$this->assertTrue($config->getGenerateReturnTypeHints());
 
-		$config->setGenerateScalarTypeHints(true);
-		$this->assertTrue($config->getGenerateScalarTypeHints());
-
-		$config->setGenerateNullableTypes(true);
-		$this->assertTrue($config->getGenerateNullableTypes());
+		$config->setGenerateTypeHints(true);
+		$this->assertTrue($config->getGenerateTypeHints());
 
 		$config->setUseStatementSorting(false);
 		$this->assertFalse($config->getUseStatementSorting());
@@ -87,32 +91,85 @@ class ConfigTest extends TestCase {
 
 		$config->setFormattingEnabled(true);
 		$this->assertTrue($config->isFormattingEnabled());
+
+		$config->setMinPhpVersion('7.4');
+		$this->assertEquals('7.4', $config->getMinPhpVersion());
+
+		$config->setGeneratePropertyTypes(false);
+		$this->assertFalse($config->getGeneratePropertyTypes());
 	}
 
-	public function testCodeFileGeneratorConfigDefaults() {
-		$config = new CodeFileGeneratorConfig();
+	public function testSetHeaderComment(): void {
+		$config = new CodeGeneratorConfig();
 
-		$this->assertNull($config->getHeaderComment());
-		$this->assertNull($config->getHeaderDocblock());
-		$this->assertTrue($config->getBlankLineAtEnd());
+		$config->setHeaderComment('String header comment.');
+		$this->assertInstanceOf(Docblock::class, $config->getHeaderComment());
+		$this->assertEquals("/**\n * String header comment.\n */", $config->getHeaderComment()->toString());
+
+		$config->setHeaderComment(new Text('Stringable header comment.'));
+		$this->assertInstanceOf(Docblock::class, $config->getHeaderComment());
+		$this->assertEquals("/**\n * Stringable header comment.\n */", $config->getHeaderComment()->toString());
+
+		$config->setHeaderComment(new Docblock('Docblock header comment.'));
+		$this->assertInstanceOf(Docblock::class, $config->getHeaderComment());
+		$this->assertEquals("/**\n * Docblock header comment.\n */", $config->getHeaderComment()->toString());
+	}
+
+	public function testSetHeaderDocblock(): void {
+		$config = new CodeGeneratorConfig();
+
+		$config->setHeaderDocblock('String header docblock.');
+		$this->assertInstanceOf(Docblock::class, $config->getHeaderDocblock());
+		$this->assertEquals("/**\n * String header docblock.\n */", $config->getHeaderDocblock()->toString());
+
+		$config->setHeaderDocblock(new Text('Stringable header docblock.'));
+		$this->assertInstanceOf(Docblock::class, $config->getHeaderDocblock());
+		$this->assertEquals("/**\n * Stringable header docblock.\n */", $config->getHeaderDocblock()->toString());
+
+		$config->setHeaderDocblock(new Docblock('Docblock header docblock.'));
+		$this->assertInstanceOf(Docblock::class, $config->getHeaderDocblock());
+		$this->assertEquals("/**\n * Docblock header docblock.\n */", $config->getHeaderDocblock()->toString());
+	}
+
+	public function testCodeStyle(): void {
+		$config = new CodeGeneratorConfig();
+
+		$config->setCodeStyle('PSR-12');
+		$this->assertEquals('psr-12', $config->getCodeStyle());
+
+		$config->setCodeStyle('unknow');
+		$this->assertEquals('psr-12', $config->getCodeStyle());
+	}
+
+	public function testAddTemplatesDirs(): void {
+		$config = new CodeGeneratorConfig();
+		$expected = [
+			sys_get_temp_dir(),
+			realpath(__DIR__ . '/../../resources/templates/default')
+		];
+
+		$config->addTemplatesDirs(sys_get_temp_dir(), '/fake/dir');
+		$this->assertEquals($expected, $config->getTemplatesDirs());
+	}
+
+	public function testDeclareStrictTypes(): void {
+		$config = new CodeGeneratorConfig(['declareStrictTypes' => false]);
+
 		$this->assertFalse($config->getDeclareStrictTypes());
+		$this->assertFalse($config->getGenerateReturnTypeHints());
+		$this->assertFalse($config->getGenerateTypeHints());
+		$this->assertFalse($config->getGeneratePropertyTypes());
 	}
 
-	public function testCodeFileGeneratorConfigDeclareStrictTypes() {
-		$config = new CodeFileGeneratorConfig(['declareStrictTypes' => true]);
-
+	public function testSetDeclareStrictTypes(): void {
+		$config = new CodeGeneratorConfig();
 		$this->assertTrue($config->getDeclareStrictTypes());
-		$this->assertTrue($config->getGenerateReturnTypeHints());
-		$this->assertTrue($config->getGenerateScalarTypeHints());
-	}
 
-	public function testCodeFileGeneratorConfigSetters() {
-		$config = new CodeFileGeneratorConfig();
+		$config->setDeclareStrictTypes(false);
 
-		$docblock = new Docblock();
-		$this->assertSame($docblock, $config->setHeaderDocblock($docblock)->getHeaderDocblock());
-
-		$this->assertFalse($config->setBlankLineAtEnd(false)->getBlankLineAtEnd());
-		$this->assertTrue($config->setDeclareStrictTypes(true)->getDeclareStrictTypes());
+		$this->assertFalse($config->getDeclareStrictTypes());
+		$this->assertFalse($config->getGenerateReturnTypeHints());
+		$this->assertFalse($config->getGenerateTypeHints());
+		$this->assertFalse($config->getGeneratePropertyTypes());
 	}
 }

@@ -1,0 +1,12 @@
+{% if config.generateDocblock %}{{ include('partials/docblock_partial.twig', {indentation: 1}) }}{% endif %}
+	{% if model.isFinal %}final {% endif %}{% if model.isAbstract %}abstract {% endif %}{{ model.visibility }}
+{%- if model.isStatic %} static{% endif %} function {% if model.isReferenceReturned %}& {% endif -%}
+{{ model.name }}(
+{%- for param in model.parameters -%}
+{{ include('parameter.twig', {model: param}) }}{% if not loop.last %}, {% endif %}
+{%- endfor -%}
+){% if config.generateReturnTypeHints and model|type != '' %}: {{ model|type }}{% endif %}
+{%- if model.isAbstract or model.parent is instanceOf('gossi\\codegen\\model\\PhpInterface') %};{% else %} {
+{% if model.body != '' %}{{ include('partials/body_partial.twig') }}{% endif %}
+	}
+{%- endif %}

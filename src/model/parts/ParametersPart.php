@@ -1,11 +1,18 @@
-<?php
-declare(strict_types=1);
+<?php  declare(strict_types=1);
+/*
+ * This file is part of the php-code-generator package.
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @license Apache-2.0
+ */
 
 namespace gossi\codegen\model\parts;
 
 use gossi\codegen\model\PhpParameter;
 use gossi\docblock\Docblock;
 use gossi\docblock\tags\ParamTag;
+use phootwork\collection\ArrayList;
 
 /**
  * Parameters Part
@@ -15,12 +22,10 @@ use gossi\docblock\tags\ParamTag;
  * @author Thomas Gossmann
  */
 trait ParametersPart {
-
-	/** @var array */
-	private $parameters = [];
+	private ArrayList $parameters;
 
 	private function initParameters() {
-// 		$this->parameters = new ArrayList();
+		$this->parameters = new ArrayList();
 	}
 
 	/**
@@ -29,13 +34,12 @@ trait ParametersPart {
 	 * Note: clears all parameters before setting the new ones
 	 *
 	 * @param PhpParameter[] $parameters
+	 *
 	 * @return $this
 	 */
-	public function setParameters(array $parameters) {
-		$this->parameters = [];
-		foreach ($parameters as $parameter) {
-			$this->addParameter($parameter);
-		}
+	public function setParameters(array $parameters): self {
+		$this->parameters->clear();
+		array_map([$this, 'addParameter'], $parameters);
 
 		return $this;
 	}
@@ -44,10 +48,11 @@ trait ParametersPart {
 	 * Adds a parameter
 	 *
 	 * @param PhpParameter $parameter
+	 *
 	 * @return $this
 	 */
-	public function addParameter(PhpParameter $parameter) {
-		$this->parameters[] = $parameter;
+	public function addParameter(PhpParameter $parameter): self {
+		$this->parameters->add($parameter);
 
 		return $this;
 	}
@@ -55,29 +60,26 @@ trait ParametersPart {
 	/**
 	 * Checks whether a parameter exists
 	 *
-	 * @param string $name parameter name
+	 * @param string|PhpParameter $name parameter name
+	 *
 	 * @return bool `true` if a parameter exists and `false` if not
 	 */
-	public function hasParameter(string $name): bool {
-		foreach ($this->parameters as $param) {
-			if ($param->getName() == $name) {
-				return true;
-			}
-		}
-
-		return false;
+	public function hasParameter(PhpParameter|string $name): bool {
+		return $this->parameters->search((string) $name,
+			fn (PhpParameter $element, string $query): bool => $element->getName() === $query)
+		;
 	}
 
 	/**
 	 * A quick way to add a parameter which is created from the given parameters
 	 *
 	 * @param string      $name
-	 * @param null|string $type
+	 * @param string 	  $type
 	 * @param mixed       $defaultValue omit the argument to define no default value
 	 *
 	 * @return $this
 	 */
-	public function addSimpleParameter(string $name, string $type = null, $defaultValue = null) {
+	public function addSimpleParameter(string $name, string $type = '', mixed $defaultValue = null): self {
 		$parameter = new PhpParameter($name);
 		$parameter->setType($type);
 
@@ -86,6 +88,7 @@ trait ParametersPart {
 		}
 
 		$this->addParameter($parameter);
+
 		return $this;
 	}
 
@@ -93,13 +96,13 @@ trait ParametersPart {
 	 * A quick way to add a parameter with description which is created from the given parameters
 	 *
 	 * @param string      $name
-	 * @param null|string $type
-	 * @param null|string $typeDescription
+	 * @param string $type
+	 * @param string $typeDescription
 	 * @param mixed       $defaultValue omit the argument to define no default value
 	 *
 	 * @return $this
 	 */
-	public function addSimpleDescParameter(string $name, string $type = null, string $typeDescription = null, $defaultValue = null) {
+	public function addSimpleDescParameter(string $name, string $type = '', string $typeDescription = '', mixed $defaultValue = null): self {
 		$parameter = new PhpParameter($name);
 		$parameter->setType($type);
 		$parameter->setTypeDescription($typeDescription);
@@ -109,6 +112,7 @@ trait ParametersPart {
 		}
 
 		$this->addParameter($parameter);
+
 		return $this;
 	}
 
@@ -116,22 +120,25 @@ trait ParametersPart {
 	 * Returns a parameter by index or name
 	 *
 	 * @param string|int $nameOrIndex
+	 *
 	 * @throws \InvalidArgumentException
+	 *
 	 * @return PhpParameter
 	 */
-	public function getParameter($nameOrIndex): PhpParameter {
-		if (is_int($nameOrIndex)) {
-			$this->checkPosition($nameOrIndex);
-			return $this->parameters[$nameOrIndex];
+	public function getParameter(int|string $nameOrIndex): PhpParameter {
+		$param = is_int($nameOrIndex) ? $this->parameters->get($nameOrIndex) :
+			$this->parameters->find($nameOrIndex,
+				fn (PhpParameter $element, string $query): bool => $element->getName() === $query
+			)
+		;
+
+		if ($param === null) {
+			throw new \InvalidArgumentException(
+				'There is no parameter ' . is_int($nameOrIndex) ? "having index $nameOrIndex" : "named `$nameOrIndex`"
+			);
 		}
 
-		foreach ($this->parameters as $param) {
-			if ($param->getName() === $nameOrIndex) {
-				return $param;
-			}
-		}
-
-		throw new \InvalidArgumentException(sprintf('There is no parameter named "%s".', $nameOrIndex));
+		return $param;
 	}
 
 	/**
@@ -139,12 +146,16 @@ trait ParametersPart {
 	 *
 	 * @param int $position
 	 * @param PhpParameter $parameter
+	 *
 	 * @throws \InvalidArgumentException
+	 *
 	 * @return $this
 	 */
 	public function replaceParameter(int $position, PhpParameter $parameter) {
-		$this->checkPosition($position);
-		$this->parameters[$position] = $parameter;
+		if ($position < 0 || $position > $this->parameters->count()) {
+			throw new \InvalidArgumentException(sprintf('The position must be in the range [0, %d].', $this->parameters->size()));
+		}
+		$this->parameters->removeByIndex($position)->insert($parameter, $position);
 
 		return $this;
 	}
@@ -153,51 +164,30 @@ trait ParametersPart {
 	 * Remove a parameter at a given position
 	 *
 	 * @param int|string|PhpParameter $param
+	 *
 	 * @return $this
 	 */
-	public function removeParameter($param) {
-		if (is_int($param)) {
-			$this->removeParameterByPosition($param);
-		} else if (is_string($param)) {
-			$this->removeParameterByName($param);
-		} else if ($param instanceof PhpParameter) {
-			$this->removeParameterByName($param->getName());
+	public function removeParameter(int|string|PhpParameter $param): self {
+		if (!is_int($param)) {
+			$param = $this->parameters->findIndex((string) $param,
+				fn (PhpParameter $element, string $query): bool => $element->getName() === $query);
 		}
+
+		if ($param === null || $this->parameters->get($param) === null) {
+			throw new \InvalidArgumentException("The parameter with index `$param` does not exists");
+		}
+
+		$this->parameters->removeByIndex($param);
 
 		return $this;
-	}
-
-	private function removeParameterByPosition($position) {
-		$this->checkPosition($position);
-		unset($this->parameters[$position]);
-		$this->parameters = array_values($this->parameters);
-	}
-
-	private function removeParameterByName($name) {
-		$position = null;
-		foreach ($this->parameters as $index => $param) {
-			if ($param->getName() == $name) {
-				$position = $index;
-			}
-		}
-
-		if ($position !== null) {
-			$this->removeParameterByPosition($position);
-		}
-	}
-
-	private function checkPosition($position) {
-		if ($position < 0 || $position > count($this->parameters)) {
-			throw new \InvalidArgumentException(sprintf('The position must be in the range [0, %d].', count($this->parameters)));
-		}
 	}
 
 	/**
 	 * Returns a collection of parameters
 	 *
-	 * @return array
+	 * @return ArrayList
 	 */
-	public function getParameters() {
+	public function getParameters(): ArrayList {
 		return $this->parameters;
 	}
 
@@ -211,27 +201,25 @@ trait ParametersPart {
 	/**
 	 * Generates docblock for params
 	 */
-	protected function generateParamDocblock() {
+	protected function generateParamDocblock(): void {
 		$docblock = $this->getDocblock();
 		$tags = $docblock->getTags('param');
+		//@todo $this->>parameters->each(...)
 		foreach ($this->parameters as $param) {
 			$ptag = $param->getDocblockTag();
 
-			$tag = $tags->find($ptag, function (ParamTag $tag, ParamTag $ptag) {
-				return $tag->getVariable() == $ptag->getVariable();
-			});
+			$tag = $tags->find($ptag,
+				fn (ParamTag $tag, ParamTag $ptag): bool => $tag->getVariable() == $ptag->getVariable()
+			);
 
 			// try to update existing docblock first
 			if ($tag !== null) {
 				$tag->setDescription($ptag->getDescription());
 				$tag->setType($ptag->getType());
-			}
-
-			// ... append if it doesn't exist
+			} // ... append if it doesn't exist
 			else {
 				$docblock->appendTag($ptag);
 			}
 		}
 	}
-
 }

@@ -1,5 +1,11 @@
-<?php
-declare(strict_types=1);
+<?php declare(strict_types=1);
+/*
+ * This file is part of the php-code-generator package.
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @license Apache-2.0
+ */
 
 namespace gossi\codegen\model\parts;
 
@@ -15,18 +21,18 @@ use gossi\docblock\Docblock;
 trait DocblockPart {
 
 	/** @var Docblock */
-	private $docblock;
+	private Docblock $docblock;
 
 	/**
 	 * Sets the docblock
 	 *
 	 * @param Docblock|string $doc
+	 *
 	 * @return $this
 	 */
-	public function setDocblock($doc) {
+	public function setDocblock(string|Docblock $doc): self {
 		if (is_string($doc)) {
-			$doc = trim($doc);
-			$doc = new Docblock($doc);
+			$doc = new Docblock(trim($doc));
 		}
 		$this->docblock = $doc;
 
@@ -41,5 +47,4 @@ trait DocblockPart {
 	public function getDocblock(): Docblock {
 		return $this->docblock;
 	}
-
 }

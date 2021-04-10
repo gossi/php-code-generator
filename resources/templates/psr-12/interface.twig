@@ -1,0 +1,21 @@
+{% if model.namespace -%}
+    namespace {{ model.namespace }};
+
+{% endif %}{% if not model.requiredFiles.isEmpty -%}
+    {{ include('partials/required_files_partial.twig') }}
+{% endif %}
+{% if model.hasUseStatementsToRender -%}
+    {{ include('partials/use_statement_partial.twig') }}
+{% endif %}
+{% if config.generateDocblock %}{{ include('partials/docblock_partial.twig', {indentation: 0}) }}{% endif %}
+interface {{ model.name }}{% if model.hasInterfaces %} extends {{ model.interfaces|join(', ') }}{% endif ~%}
+{
+{% for constant in model.constants %}
+
+{{ include('constant.twig', {model: constant}) }}
+{% endfor %}
+{% for method in model.methods %}
+{{ model.parent.name }}
+{{ include('method.twig', {model: method}) }}
+{% endfor %}
+}

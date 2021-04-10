@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /*
  * Copyright 2011 Johannes M. Schmitt <schmittjoh@gmail.com>
  *
@@ -14,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-declare(strict_types=1);
 
 namespace gossi\codegen\model;
 
@@ -32,8 +31,7 @@ use gossi\docblock\tags\ReturnTag;
  * @author Johannes M. Schmitt <schmittjoh@gmail.com>
  * @author Thomas Gossmann
  */
-class PhpMethod extends AbstractPhpMember implements RoutineInterface {
-
+class PhpMethod extends AbstractPhpMember implements RoutineInterface, GenerateableInterface {
 	use AbstractPart;
 	use BodyPart;
 	use FinalPart;
@@ -46,11 +44,11 @@ class PhpMethod extends AbstractPhpMember implements RoutineInterface {
 	 *
 	 * @param string $name the method name
 	 */
-	public static function create($name) {
+	public static function create(string $name): static {
 		return new static($name);
 	}
 
-	public function __construct($name) {
+	public function __construct(string $name) {
 		parent::__construct($name);
 		$this->initParameters();
 	}
@@ -58,7 +56,7 @@ class PhpMethod extends AbstractPhpMember implements RoutineInterface {
 	/**
 	 * Generates docblock based on provided information
 	 */
-	public function generateDocblock() {
+	public function generateDocblock(): void {
 		$docblock = $this->getDocblock();
 		$docblock->setShortDescription($this->getDescription());
 		$docblock->setLongDescription($this->getLongDescription());

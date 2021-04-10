@@ -1,4 +1,5 @@
 <?php
+
 class ClassWithExpression {
 
 	const FOO = 'BAR';

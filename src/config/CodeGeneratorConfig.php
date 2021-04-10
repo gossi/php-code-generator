@@ -1,11 +1,18 @@
-<?php
-declare(strict_types=1);
+<?php declare(strict_types=1);
+/*
+ * This file is part of the php-code-generator package.
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @license Apache-2.0
+ */
 
 namespace gossi\codegen\config;
 
-use gossi\code\profiles\Profile;
 use gossi\codegen\generator\CodeGenerator;
+use gossi\docblock\Docblock;
 use phootwork\lang\Comparator;
+use Stringable;
 use Symfony\Component\OptionsResolver\Options;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
@@ -15,78 +22,87 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  * @author Thomas Gossmann
  */
 class CodeGeneratorConfig {
-
-	protected $options;
-
-	/** @var Profile */
-	protected $profile;
+	protected array $options;
 
 	/**
 	 * Creates a new configuration for code generator
 	 *
 	 * @see https://php-code-generator.readthedocs.org/en/latest/generator.html
+	 *
 	 * @param array $options
 	 */
 	public function __construct(array $options = []) {
 		$resolver = new OptionsResolver();
 		$this->configureOptions($resolver);
 		$this->options = $resolver->resolve($options);
-		$this->profile = is_string($this->options['profile']) ? new Profile($this->options['profile']) : $this->options['profile'];
 	}
 
 	protected function configureOptions(OptionsResolver $resolver): void {
 		$resolver->setDefaults([
-			'profile' => 'default',
 			'generateDocblock' => true,
-			'generateEmptyDocblock' => function (Options $options) {
-				return $options['generateDocblock'];
-			},
-			'generateScalarTypeHints' => false,
-			'generateReturnTypeHints' => false,
-			'generateNullableTypes' => false,
-			'enableFormatting' => false,
+			'generateEmptyDocblock' => fn (Options $options) => $options['generateDocblock'],
+			'generateTypeHints' => fn (Options $options) => $options['declareStrictTypes'],
+			'generateReturnTypeHints' => fn (Options $options) => $options['declareStrictTypes'],
+			'generatePropertyTypes' => fn (Options $options) => $options['declareStrictTypes'],
+			'minPhpVersion' => '8.0',
 			'enableSorting' => true,
 			'useStatementSorting' => CodeGenerator::SORT_USESTATEMENTS_DEFAULT,
 			'constantSorting' => CodeGenerator::SORT_CONSTANTS_DEFAULT,
 			'propertySorting' => CodeGenerator::SORT_PROPERTIES_DEFAULT,
-			'methodSorting' => CodeGenerator::SORT_METHODS_DEFAULT
+			'methodSorting' => CodeGenerator::SORT_METHODS_DEFAULT,
+			'headerComment' => '',
+			'headerDocblock' => '',
+			'declareStrictTypes' => true,
+			'codeStyle' => 'default',
+			'templatesDirs' => []
 		]);
 
-		$resolver->setAllowedTypes('profile', ['string', 'gossi\code\profiles\Profile']);
 		$resolver->setAllowedTypes('generateDocblock', 'bool');
 		$resolver->setAllowedTypes('generateEmptyDocblock', 'bool');
-		$resolver->setAllowedTypes('generateScalarTypeHints', 'bool');
+		$resolver->setAllowedTypes('generateTypeHints', 'bool');
 		$resolver->setAllowedTypes('generateReturnTypeHints', 'bool');
-		$resolver->setAllowedTypes('generateNullableTypes', 'bool');
-		$resolver->setAllowedTypes('enableFormatting', 'bool');
+		$resolver->setAllowedTypes('generatePropertyTypes', 'bool');
+		$resolver->setAllowedTypes('minPhpVersion', 'string');
 		$resolver->setAllowedTypes('enableSorting', 'bool');
-		$resolver->setAllowedTypes('useStatementSorting', ['bool', 'string', '\Closure', 'phootwork\lang\Comparator']);
-		$resolver->setAllowedTypes('constantSorting', ['bool', 'string', '\Closure', 'phootwork\lang\Comparator']);
-		$resolver->setAllowedTypes('propertySorting', ['bool', 'string', '\Closure', 'phootwork\lang\Comparator']);
-		$resolver->setAllowedTypes('methodSorting', ['bool', 'string', '\Closure', 'phootwork\lang\Comparator']);
-	}
+		$resolver->setAllowedTypes('useStatementSorting', ['bool', 'string', '\Closure', Comparator::class]);
+		$resolver->setAllowedTypes('constantSorting', ['bool', 'string', '\Closure', Comparator::class]);
+		$resolver->setAllowedTypes('propertySorting', ['bool', 'string', '\Closure', Comparator::class]);
+		$resolver->setAllowedTypes('methodSorting', ['bool', 'string', '\Closure', Comparator::class]);
+		$resolver->setAllowedTypes('headerComment', ['string', Docblock::class]);
+		$resolver->setAllowedTypes('headerDocblock', ['string', Docblock::class]);
+		$resolver->setAllowedTypes('declareStrictTypes', 'bool');
+		$resolver->setAllowedTypes('codeStyle', 'string');
+		$resolver->setAllowedTypes('templatesDirs', 'string[]');
 
-	/**
-	 * Returns the code style profile
-	 *
-	 * @return Profile
-	 */
-	public function getProfile(): Profile {
-		return $this->profile;
-	}
+		/** All templates directories must exists */
+		$resolver->setAllowedValues('templatesDirs',
+			fn (array $dirs): bool => count(array_filter($dirs, 'is_dir')) === count($dirs)
+		);
+		$resolver->setAllowedValues('codeStyle',
+			fn (string $value): bool => in_array(strtolower($value), ['default', 'phootwork', 'psr-12'])
+		);
+		$resolver->setAllowedValues('minPhpVersion', fn (string $value): bool => in_array($value, ['7.4', '8.0']));
 
-	/**
-	 * Sets the code style profile
-	 *
-	 * @param Profile|string $profile
-	 * @return $this
-	 */
-	public function setProfile($profile) {
-		if (is_string($profile)) {
-			$profile = new Profile($profile);
+		$resolver->setNormalizer('headerComment',
+			fn (Options $options, Docblock|string $value): Docblock => is_string($value) ? new Docblock(str_replace('/*', '/**', $value)) : $value
+		);
+		$resolver->setNormalizer('headerDocblock',
+			fn (Options $options, Docblock|string $value): Docblock => is_string($value) ? new Docblock($value) : $value
+		);
+
+		$resolver->setNormalizer('codeStyle', function (Options $options, string $value): string {
+			$value = strtolower($value);
+
+			return $value === 'phootwork' ? 'default' : $value;
 		}
-		$this->profile = $profile;
-		return $this;
+		);
+
+		$resolver->setNormalizer('templatesDirs', function (Options $options, array $value): array {
+			$value[] = realpath(__DIR__ . '/../../resources/templates/' . $options['codeStyle']);
+
+			return $value;
+		}
+		);
 	}
 
 	/**
@@ -102,13 +118,15 @@ class CodeGeneratorConfig {
 	 * Sets whether docblocks should be generated
 	 *
 	 * @param bool $generate `true` if they will be generated and `false` if not
+	 *
 	 * @return $this
 	 */
-	public function setGenerateDocblock(bool $generate) {
+	public function setGenerateDocblock(bool $generate): self {
 		$this->options['generateDocblock'] = $generate;
 		if (!$generate) {
 			$this->options['generateEmptyDocblock'] = $generate;
 		}
+
 		return $this;
 	}
 
@@ -125,23 +143,25 @@ class CodeGeneratorConfig {
 	 * Sets whether empty docblocks are generated
 	 *
 	 * @param bool $generate `true` if they will be generated and `false` if not
+	 *
 	 * @return $this
 	 */
-	public function setGenerateEmptyDocblock(bool $generate) {
+	public function setGenerateEmptyDocblock(bool $generate): self {
 		$this->options['generateEmptyDocblock'] = $generate;
 		if ($generate) {
 			$this->options['generateDocblock'] = $generate;
 		}
+
 		return $this;
 	}
 
 	/**
-	 * Returns whether scalar type hints will be generated for method parameters (PHP 7)
+	 * Returns whether type hints will be generated for method parameters
 	 *
 	 * @return bool `true` if they will be generated and `false` if not
 	 */
-	public function getGenerateScalarTypeHints(): bool {
-		return $this->options['generateScalarTypeHints'];
+	public function getGenerateTypeHints(): bool {
+		return $this->options['generateTypeHints'];
 	}
 
 	/**
@@ -163,11 +183,37 @@ class CodeGeneratorConfig {
 	}
 
 	/**
+	 * Sets whether sorting is enabled
+	 *
+	 * @param $enabled bool `true` if it is enabled and `false` if not
+	 *
+	 * @return $this
+	 */
+	public function setSortingEnabled(bool $enabled): self {
+		$this->options['enableSorting'] = $enabled;
+
+		return $this;
+	}
+
+	/**
+	 * Sets whether formatting is enabled
+	 *
+	 * @param $enabled bool `true` if it is enabled and `false` if not
+	 *
+	 * @return $this
+	 */
+	public function setFormattingEnabled(bool $enabled): self {
+		$this->options['enableFormatting'] = $enabled;
+
+		return $this;
+	}
+
+	/**
 	 * Returns the use statement sorting
 	 *
 	 * @return string|bool|Comparator|\Closure
 	 */
-	public function getUseStatementSorting() {
+	public function getUseStatementSorting(): string|bool|Comparator|\Closure {
 		return $this->options['useStatementSorting'];
 	}
 
@@ -176,7 +222,7 @@ class CodeGeneratorConfig {
 	 *
 	 * @return string|bool|Comparator|\Closure
 	 */
-	public function getConstantSorting() {
+	public function getConstantSorting(): string|bool|Comparator|\Closure {
 		return $this->options['constantSorting'];
 	}
 
@@ -185,7 +231,7 @@ class CodeGeneratorConfig {
 	 *
 	 * @return string|bool|Comparator|\Closure
 	 */
-	public function getPropertySorting() {
+	public function getPropertySorting(): string|bool|Comparator|\Closure {
 		return $this->options['propertySorting'];
 	}
 
@@ -194,23 +240,25 @@ class CodeGeneratorConfig {
 	 *
 	 * @return string|bool|Comparator|\Closure
 	 */
-	public function getMethodSorting() {
+	public function getMethodSorting(): string|bool|Comparator|\Closure {
 		return $this->options['methodSorting'];
 	}
 
 	/**
-	 * Sets whether scalar type hints will be generated for method parameters (PHP 7)
+	 * Sets whether scalar type hints will be generated for method parameters
 	 *
 	 * @param bool $generate `true` if they will be generated and `false` if not
+	 *
 	 * @return $this
 	 */
-	public function setGenerateScalarTypeHints(bool $generate) {
-		$this->options['generateScalarTypeHints'] = $generate;
+	public function setGenerateTypeHints(bool $generate): self {
+		$this->options['generateTypeHints'] = $generate;
+
 		return $this;
 	}
 
 	/**
-	 * Returns whether return type hints will be generated for method parameters (PHP 7)
+	 * Returns whether return type hints will be generated for method parameters
 	 *
 	 * @return bool `true` if they will be generated and `false` if not
 	 */
@@ -219,55 +267,15 @@ class CodeGeneratorConfig {
 	}
 
 	/**
-	 * Sets whether return type hints will be generated for method parameters (PHP 7)
+	 * Sets whether return type hints will be generated for method parameters
 	 *
 	 * @param bool $generate `true` if they will be generated and `false` if not
+	 *
 	 * @return $this
 	 */
-	public function setGenerateReturnTypeHints(bool $generate) {
+	public function setGenerateReturnTypeHints(bool $generate): self {
 		$this->options['generateReturnTypeHints'] = $generate;
-		return $this;
-	}
 
-	/**
-	 * Returns whether return nullable type hints will be generated (PHP 7.3)
-	 *
-	 * @return bool `true` if they will be generated and `false` if not
-	 */
-	public function getGenerateNullableTypes(): bool {
-		return $this->options['generateNullableTypes'];
-	}
-
-	/**
-	 * Sets whether return nullable type hints will be generated (PHP 7.3)
-	 *
-	 * @param bool $generate `true` if they will be generated and `false` if not
-	 * @return $this
-	 */
-	public function setGenerateNullableTypes(bool $generate) {
-		$this->options['generateNullableTypes'] = $generate;
-		return $this;
-	}
-
-	/**
-	 * Sets whether sorting is enabled
-	 *
-	 * @param $enabled bool `true` if it is enabled and `false` if not
-	 * @return $this
-	 */
-	public function setSortingEnabled(bool $enabled) {
-		$this->options['enableSorting'] = $enabled;
-		return $this;
-	}
-
-	/**
-	 * Sets whether formatting is enabled
-	 *
-	 * @param $enabled bool `true` if it is enabled and `false` if not
-	 * @return $this
-	 */
-	public function setFormattingEnabled(bool $enabled) {
-		$this->options['enableFormatting'] = $enabled;
 		return $this;
 	}
 
@@ -275,10 +283,12 @@ class CodeGeneratorConfig {
 	 * Returns the use statement sorting
 	 *
 	 * @param $sorting string|bool|Comparator|\Closure
+	 *
 	 * @return $this
 	 */
-	public function setUseStatementSorting($sorting) {
+	public function setUseStatementSorting(string|bool|Comparator|\Closure $sorting): self {
 		$this->options['useStatementSorting'] = $sorting;
+
 		return $this;
 	}
 
@@ -286,10 +296,12 @@ class CodeGeneratorConfig {
 	 * Returns the constant sorting
 	 *
 	 * @param $sorting string|bool|Comparator|\Closure
+	 *
 	 * @return $this
 	 */
-	public function setConstantSorting($sorting) {
+	public function setConstantSorting(string|bool|Comparator|\Closure $sorting): self {
 		$this->options['constantSorting'] = $sorting;
+
 		return $this;
 	}
 
@@ -297,10 +309,12 @@ class CodeGeneratorConfig {
 	 * Returns the property sorting
 	 *
 	 * @param $sorting string|bool|Comparator|\Closure
+	 *
 	 * @return $this
 	 */
-	public function setPropertySorting($sorting) {
+	public function setPropertySorting(string|bool|Comparator|\Closure $sorting): self {
 		$this->options['propertySorting'] = $sorting;
+
 		return $this;
 	}
 
@@ -308,10 +322,147 @@ class CodeGeneratorConfig {
 	 * Returns the method sorting
 	 *
 	 * @param $sorting string|bool|Comparator|\Closure
+	 *
 	 * @return $this
 	 */
-	public function setMethodSorting($sorting) {
+	public function setMethodSorting(string|bool|Comparator|\Closure $sorting): self {
 		$this->options['methodSorting'] = $sorting;
+
+		return $this;
+	}
+
+	/**
+	 * Returns the file header comment
+	 *
+	 * @return Docblock|null the header comment
+	 */
+	public function getHeaderComment(): ?Docblock {
+		return $this->options['headerComment'];
+	}
+
+	/**
+	 * Sets the file header comment
+	 *
+	 * @param string|Stringable|Docblock $comment the header comment
+	 *
+	 * @return $this
+	 */
+	public function setHeaderComment(string|Stringable|Docblock $comment): self {
+		$this->options['headerComment'] = $comment instanceof Docblock ? $comment :
+			new Docblock((string) $comment);
+
+		return $this;
+	}
+
+	/**
+	 * Returns the file header docblock
+	 *
+	 * @return Docblock|null the docblock
+	 */
+	public function getHeaderDocblock(): ?Docblock {
+		return $this->options['headerDocblock'];
+	}
+
+	/**
+	 * Sets the file header docblock
+	 *
+	 * @param string|Stringable|Docblock $docblock the docblock
+	 *
+	 * @return $this
+	 */
+	public function setHeaderDocblock(string|Stringable|Docblock $docblock): self {
+		$this->options['headerDocblock'] = $docblock instanceof Docblock ? $docblock :
+			new Docblock((string) $docblock);
+
+		return $this;
+	}
+
+	/**
+	 * Returns whether a `declare(strict_types=1);` statement should be printed
+	 * as the very first instruction
+	 *
+	 * @return bool `true` if it will be printed and `false` if not
+	 */
+	public function getDeclareStrictTypes(): bool {
+		return $this->options['declareStrictTypes'];
+	}
+
+	/**
+	 * Sets whether a `declare(strict_types=1);` statement should be printed
+	 * below the header comments
+	 *
+	 * @param bool $strict `true` if it will be printed and `false` if not
+	 *
+	 * @return $this
+	 */
+	public function setDeclareStrictTypes(bool $strict): self {
+		$this->options['declareStrictTypes'] = $strict;
+
+		$this->options['generateReturnTypeHints'] = $strict;
+		$this->options['generateTypeHints'] = $strict;
+		$this->options['generatePropertyTypes'] = $strict;
+
+		return $this;
+	}
+
+	public function getCodeStyle(): string {
+		return $this->options['codeStyle'];
+	}
+
+	public function setCodeStyle(string $style): self {
+		$style = strtolower($style);
+		if (in_array($style, ['default', 'phootwork', 'psr-12'])) {
+			$this->options['codeStyle'] = $style;
+		}
+
+		return $this;
+	}
+
+	/**
+	 * @return string[]
+	 */
+	public function getTemplatesDirs(): array {
+		return $this->options['templatesDirs'];
+	}
+
+	/**
+	 * Prepend one or more directories, where templates reside.
+	 * The order of the directories is mandatory to correctly find overridden templates.
+	 *
+	 * @param string ...$dirs
+	 *
+	 * @return $this
+	 */
+	public function addTemplatesDirs(string ...$dirs): self {
+		$dirs = array_reverse($dirs);
+		foreach ($dirs as $dir) {
+			if (is_dir($dir)) {
+				array_unshift($this->options['templatesDirs'], $dir);
+			}
+		}
+
+		return $this;
+	}
+
+	public function getGeneratePropertyTypes(): bool {
+		return $this->options['generatePropertyTypes'];
+	}
+
+	public function setGeneratePropertyTypes(bool $types): self {
+		$this->options['generatePropertyTypes'] = $types;
+
+		return $this;
+	}
+
+	public function getMinPhpVersion(): string {
+		return $this->options['minPhpVersion'];
+	}
+
+	public function setMinPhpVersion(string $version): self {
+		if (in_array($version, ['7.4', '8.0'])) {
+			$this->options['minPhpVersion'] = $version;
+		}
+
 		return $this;
 	}
 }

@@ -1,5 +1,11 @@
-<?php
-declare(strict_types=1);
+<?php declare(strict_types=1);
+/*
+ * This file is part of the php-code-generator package.
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @license Apache-2.0
+ */
 
 namespace gossi\codegen\model\parts;
 
@@ -13,7 +19,7 @@ namespace gossi\codegen\model\parts;
 trait AbstractPart {
 
 	/** @var bool */
-	private $abstract = false;
+	private bool $abstract = false;
 
 	/**
 	 * Returns whether this is abstract
@@ -28,9 +34,10 @@ trait AbstractPart {
 	 * Sets this to abstract
 	 *
 	 * @param bool $abstract `true` for abstract and `false` if not
+	 *
 	 * @return $this
 	 */
-	public function setAbstract(bool $abstract) {
+	public function setAbstract(bool $abstract): self {
 		$this->abstract = $abstract;
 
 		return $this;

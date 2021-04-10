@@ -1,7 +1,15 @@
-<?php
-declare(strict_types=1);
+<?php declare(strict_types=1);
+/*
+ * This file is part of the php-code-generator package.
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @license Apache-2.0
+ */
 
 namespace gossi\codegen\model\parts;
+
+use phootwork\lang\Text;
 
 /**
  * Type part
@@ -13,26 +21,43 @@ namespace gossi\codegen\model\parts;
 trait TypePart {
 
 	/** @var string */
-	private $type;
+	private string $type = '';
 
 	/** @var string */
-	private $typeDescription;
+	private string $typeDescription = '';
 
 	/** @var bool */
-	private $typeNullable;
+	private bool $typeNullable = false;
+
+	private array $typeHintMap = [
+		'string' => 'string',
+		'int' => 'int',
+		'integer' => 'int',
+		'bool' => 'bool',
+		'boolean' => 'bool',
+		'float' => 'float',
+		'double' => 'float',
+		'object' => 'object',
+		'mixed' => 'mixed',
+		'resource' => 'resource',
+		'callable' => 'callable',
+		'null' => 'null'
+];
 
 	/**
 	 * Sets the type
-	 *
+	 * 
 	 * @param string $type
 	 * @param string $description
+	 *
 	 * @return $this
 	 */
-	public function setType(?string $type, string $description = null) {
-		$this->type = $type;
-		if (null !== $description) {
-			$this->setTypeDescription($description);
-		}
+	public function setType(string $type, string $description = ''): self {
+		$this->type = Text::create($type)
+			->replace(['boolean', 'integer', 'double'], ['bool', 'int', 'float'])
+			->toString();
+
+		$this->setTypeDescription($description);
 
 		return $this;
 	}
@@ -41,10 +66,12 @@ trait TypePart {
 	 * Sets the description for the type
 	 *
 	 * @param string $description
+	 *
 	 * @return $this
 	 */
-	public function setTypeDescription(string $description) {
+	public function setTypeDescription(string $description): self {
 		$this->typeDescription = $description;
+
 		return $this;
 	}
 
@@ -53,7 +80,7 @@ trait TypePart {
 	 *
 	 * @return string
 	 */
-	public function getType(): ?string {
+	public function getType(): string {
 		return $this->type;
 	}
 
@@ -62,7 +89,7 @@ trait TypePart {
 	 *
 	 * @return string
 	 */
-	public function getTypeDescription(): ?string {
+	public function getTypeDescription(): string {
 		return $this->typeDescription;
 	}
 
@@ -79,10 +106,12 @@ trait TypePart {
 	 * Sets the type nullable
 	 * 
 	 * @param bool $nullable
+	 *
 	 * @return $this
 	 */
-	public function setNullable(bool $nullable) {
-		$this->typeNullable = $nullable;
+	public function setNullable(bool $nullable): self {
+		$this->typeNullable = $this->type === 'mixed' ? false : $nullable;
+
 		return $this;
 	}
 }

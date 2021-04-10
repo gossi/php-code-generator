@@ -1,9 +1,16 @@
-<?php
-declare(strict_types=1);
+<?php declare(strict_types=1);
+/*
+ * This file is part of the php-code-generator package.
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @license Apache-2.0
+ */
 
 namespace gossi\codegen\model\parts;
 
 use gossi\codegen\model\PhpProperty;
+use InvalidArgumentException;
 use phootwork\collection\Map;
 use phootwork\collection\Set;
 
@@ -17,7 +24,7 @@ use phootwork\collection\Set;
 trait PropertiesPart {
 
 	/** @var Map */
-	private $properties;
+	private Map $properties;
 
 	private function initProperties() {
 		$this->properties = new Map();
@@ -27,18 +34,14 @@ trait PropertiesPart {
 	 * Sets a collection of properties
 	 *
 	 * @param PhpProperty[] $properties
+	 *
 	 * @return $this
 	 */
-	public function setProperties(array $properties) {
-		foreach ($this->properties as $prop) {
-			$prop->setParent(null);
-		}
-
+	public function setProperties(array $properties): self {
+		$this->properties->each(fn (string $key, PhpProperty $prop) => $prop->setParent(null));
 		$this->properties->clear();
 
-		foreach ($properties as $prop) {
-			$this->setProperty($prop);
-		}
+		array_map([$this, 'setProperty'], $properties);
 
 		return $this;
 	}
@@ -47,9 +50,11 @@ trait PropertiesPart {
 	 * Adds a property
 	 *
 	 * @param PhpProperty $property
+	 *
 	 * @return $this
 	 */
-	public function setProperty(PhpProperty $property) {
+	public function setProperty(PhpProperty $property): self {
+		/** AbstractPhpStruct $this */
 		$property->setParent($this);
 		$this->properties->set($property->getName(), $property);
 
@@ -60,20 +65,20 @@ trait PropertiesPart {
 	 * Removes a property
 	 *
 	 * @param PhpProperty|string $nameOrProperty property name or instance
-	 * @throws \InvalidArgumentException If the property cannot be found
+	 *
+	 * @throws InvalidArgumentException If the property cannot be found
+	 *
 	 * @return $this
 	 */
-	public function removeProperty($nameOrProperty) {
-		if ($nameOrProperty instanceof PhpProperty) {
-			$nameOrProperty = $nameOrProperty->getName();
+	public function removeProperty(PhpProperty|string $nameOrProperty): self {
+		$name = (string) $nameOrProperty;
+
+		if (!$this->properties->has($name)) {
+			throw new InvalidArgumentException("The property `$name` does not exist.");
 		}
 
-		if (!$this->properties->has($nameOrProperty)) {
-			throw new \InvalidArgumentException(sprintf('The property "%s" does not exist.', $nameOrProperty));
-		}
-		$p = $this->properties->get($nameOrProperty);
-		$p->setParent(null);
-		$this->properties->remove($nameOrProperty);
+		$this->properties->get($name)->setParent(null);
+		$this->properties->remove($name);
 
 		return $this;
 	}
@@ -82,33 +87,28 @@ trait PropertiesPart {
 	 * Checks whether a property exists
 	 *
 	 * @param PhpProperty|string $nameOrProperty property name or instance
+	 *
 	 * @return bool `true` if a property exists and `false` if not
 	 */
-	public function hasProperty($nameOrProperty): bool {
-		if ($nameOrProperty instanceof PhpProperty) {
-			$nameOrProperty = $nameOrProperty->getName();
-		}
-
-		return $this->properties->has($nameOrProperty);
+	public function hasProperty(PhpProperty|string $nameOrProperty): bool {
+		return $this->properties->has((string) $nameOrProperty);
 	}
 
 	/**
 	 * Returns a property
 	 *
-	 * @param string $nameOrProperty property name
-	 * @throws \InvalidArgumentException If the property cannot be found
+	 * @param string $name property name
+	 *
+	 * @throws InvalidArgumentException If the property cannot be found
+	 *
 	 * @return PhpProperty
 	 */
-	public function getProperty($nameOrProperty): PhpProperty {
-		if ($nameOrProperty instanceof PhpProperty) {
-			$nameOrProperty = $nameOrProperty->getName();
+	public function getProperty(string $name): PhpProperty {
+		if (!$this->properties->has($name)) {
+			throw new InvalidArgumentException(sprintf('The property "%s" does not exist.', $name));
 		}
 
-		if (!$this->properties->has($nameOrProperty)) {
-			throw new \InvalidArgumentException(sprintf('The property "%s" does not exist.', $nameOrProperty));
-		}
-
-		return $this->properties->get($nameOrProperty);
+		return $this->properties->get($name);
 	}
 
 	/**
@@ -134,10 +134,8 @@ trait PropertiesPart {
 	 *
 	 * @return $this
 	 */
-	public function clearProperties() {
-		foreach ($this->properties as $property) {
-			$property->setParent(null);
-		}
+	public function clearProperties(): self {
+		$this->properties->each(fn (string $key, PhpProperty $elem) => $elem->setParent(null));
 		$this->properties->clear();
 
 		return $this;

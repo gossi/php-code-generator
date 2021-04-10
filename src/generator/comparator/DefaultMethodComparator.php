@@ -1,8 +1,15 @@
-<?php
-declare(strict_types=1);
+<?php declare(strict_types=1);
+/*
+ * This file is part of the php-code-generator package.
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @license Apache-2.0
+ */
 
 namespace gossi\codegen\generator\comparator;
 
+use gossi\codegen\generator\comparator\parts\CompareVisibilityPart;
 use gossi\codegen\model\PhpMethod;
 use phootwork\lang\Comparator;
 
@@ -12,24 +19,23 @@ use phootwork\lang\Comparator;
  * Orders them by static first, then visibility and last by property name
  */
 class DefaultMethodComparator implements Comparator {
+	use CompareVisibilityPart;
 
 	/**
-	 * @param PhpMethod $a
-	 * @param PhpMethod $b
+	 * @param mixed $a
+	 * @param mixed $b
+	 *
+	 * @return int
 	 */
-	public function compare($a, $b) {
+	public function compare(mixed $a, mixed $b): int {
+		if (!($a instanceof PhpMethod) || !($b instanceof PhpMethod)) {
+			throw new \TypeError('DefaultMethodComparator::compare method compares PhpMethod objects only');
+		}
+
 		if ($a->isStatic() !== $isStatic = $b->isStatic()) {
 			return $isStatic ? 1 : -1;
 		}
 
-		if (($aV = $a->getVisibility()) !== $bV = $b->getVisibility()) {
-			$aV = 'public' === $aV ? 3 : ('protected' === $aV ? 2 : 1);
-			$bV = 'public' === $bV ? 3 : ('protected' === $bV ? 2 : 1);
-
-			return $aV > $bV ? -1 : 1;
-		}
-
-		return strcasecmp($a->getName(), $b->getName());
+		return $this->compareVisibilityName($a, $b);
 	}
-
 }

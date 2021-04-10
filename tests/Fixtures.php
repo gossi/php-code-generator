@@ -1,4 +1,12 @@
-<?php
+<?php declare(strict_types=1);
+/*
+ * This file is part of the php-code-generator package.
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @license Apache-2.0
+ */
+
 namespace gossi\codegen\tests;
 
 use gossi\codegen\model\PhpClass;
@@ -19,7 +27,7 @@ class Fixtures {
 	 * 
 	 * @return PhpClass
 	 */
-	public static function createEntity() {
+	public static function createEntity(): PhpClass {
 		$classDoc = new Docblock('/**
  * Doc Comment.
  *
@@ -86,7 +94,7 @@ class Fixtures {
 	 * 
 	 * @return PhpClass
 	 */
-	public static function createClassWithConstants() {
+	public static function createClassWithConstants(): PhpClass {
 		return PhpClass::create('gossi\\codegen\\tests\\fixtures\\ClassWithConstants')
 			->setConstant(PhpConstant::create('BAR')->setExpression('self::FOO'))
 			->setConstant(PhpConstant::create('FOO', 'bar'))
@@ -98,7 +106,7 @@ class Fixtures {
 	 * 
 	 * @return PhpClass
 	 */
-	public static function createClassWithTraits() {
+	public static function createClassWithTraits(): PhpClass {
 		return PhpClass::create('gossi\\codegen\\tests\\fixtures\\ClassWithTraits')
 			->addUseStatement('gossi\\codegen\\tests\\fixtures\\DummyTrait', 'DT')
 			->addTrait('DT');
@@ -108,7 +116,7 @@ class Fixtures {
 	 *
 	 * @return PhpClass
 	 */
-	public static function createABClass() {
+	public static function createABClass(): PhpClass {
 		return PhpClass::create()
 			->setName('ABClass')
 			->setMethod(PhpMethod::create('a'))
@@ -124,7 +132,7 @@ class Fixtures {
 	 * 
 	 * @return PhpClass
 	 */
-	public static function createClassWithComments() {
+	public static function createClassWithComments(): PhpClass {
 		$class = PhpClass::create('gossi\\codegen\\tests\\fixtures\\ClassWithComments');
 		$class->setDescription('A class with comments');
 		$class->setLongDescription('Here is a super dooper long-description');
@@ -165,7 +173,7 @@ class Fixtures {
 	 * 
 	 * @return PhpInterface
 	 */
-	public static function createDummyInterface() {
+	public static function createDummyInterface(): PhpInterface {
 		$interface = PhpInterface::create('DummyInterface')
 			->setNamespace('gossi\codegen\tests\fixtures')
 			->setDescription('Dummy docblock')
@@ -180,7 +188,7 @@ class Fixtures {
 	 * 
 	 * @return PhpTrait
 	 */
-	public static function createDummyTrait() {
+	public static function createDummyTrait(): PhpTrait {
 		$trait = PhpTrait::create('DummyTrait')
 			->setNamespace('gossi\\codegen\\tests\\fixtures')
 			->setDescription('Dummy docblock')
@@ -191,5 +199,4 @@ class Fixtures {
 
 		return $trait;
 	}
-
 }

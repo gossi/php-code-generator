@@ -1,0 +1,3 @@
+{% if model|type != '' %}{{ model|type }} {% endif %}
+{%- if model.isPassedByReference %}&{% endif %}${{ model.name }}
+{%- if model.hasValue %} = {{ model|value }}{% endif %}

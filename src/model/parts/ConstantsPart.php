@@ -1,5 +1,11 @@
-<?php
-declare(strict_types=1);
+<?php declare(strict_types=1);
+/*
+ * This file is part of the php-code-generator package.
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @license Apache-2.0
+ */
 
 namespace gossi\codegen\model\parts;
 
@@ -17,7 +23,7 @@ use phootwork\collection\Set;
 trait ConstantsPart {
 
 	/** @var Map */
-	private $constants;
+	private Map $constants;
 
 	private function initConstants() {
 		$this->constants = new Map();
@@ -27,9 +33,10 @@ trait ConstantsPart {
 	 * Sets a collection of constants
 	 *
 	 * @param array|PhpConstant[] $constants
+	 *
 	 * @return $this
 	 */
-	public function setConstants(array $constants) {
+	public function setConstants(array $constants): self {
 		$normalizedConstants = [];
 		foreach ($constants as $name => $value) {
 			if ($value instanceof PhpConstant) {
@@ -52,11 +59,12 @@ trait ConstantsPart {
 	 * Adds a constant
 	 *
 	 * @param string|PhpConstant $nameOrConstant constant name or instance
-	 * @param string $value
+	 * @param string|int|float|bool|null $value
 	 * @param bool $isExpression whether the value is an expression or not
+	 *
 	 * @return $this
 	 */
-	public function setConstant($nameOrConstant, string $value = null, bool $isExpression = false) {
+	public function setConstant(PhpConstant|string $nameOrConstant, string|int|float|bool|null $value = '', bool $isExpression = false): self {
 		if ($nameOrConstant instanceof PhpConstant) {
 			$name = $nameOrConstant->getName();
 			$constant = $nameOrConstant;
@@ -74,19 +82,17 @@ trait ConstantsPart {
 	 * Removes a constant
 	 *
 	 * @param string|PhpConstant $nameOrConstant constant name
+	 *
 	 * @throws \InvalidArgumentException If the constant cannot be found
+	 *
 	 * @return $this
 	 */
-	public function removeConstant($nameOrConstant) {
-		if ($nameOrConstant instanceof PhpConstant) {
-			$nameOrConstant = $nameOrConstant->getName();
-		}
-
-		if (!$this->constants->has($nameOrConstant)) {
+	public function removeConstant(PhpConstant|string $nameOrConstant): self {
+		if (!$this->constants->has((string) $nameOrConstant)) {
 			throw new \InvalidArgumentException(sprintf('The constant "%s" does not exist.', $nameOrConstant));
 		}
 
-		$this->constants->remove($nameOrConstant);
+		$this->constants->remove((string) $nameOrConstant);
 
 		return $this;
 	}
@@ -95,33 +101,28 @@ trait ConstantsPart {
 	 * Checks whether a constant exists
 	 *
 	 * @param string|PhpConstant $nameOrConstant
+	 *
 	 * @return bool
 	 */
-	public function hasConstant($nameOrConstant): bool {
-		if ($nameOrConstant instanceof PhpConstant) {
-			$nameOrConstant = $nameOrConstant->getName();
-		}
-
-		return $this->constants->has($nameOrConstant);
+	public function hasConstant(PhpConstant|string $nameOrConstant): bool {
+		return $this->constants->has((string) $nameOrConstant);
 	}
 
 	/**
 	 * Returns a constant.
 	 *
-	 * @param string|PhpConstant $nameOrConstant
+	 * @param string $name
+	 *
 	 * @throws \InvalidArgumentException If the constant cannot be found
+	 *
 	 * @return PhpConstant
 	 */
-	public function getConstant($nameOrConstant): PhpConstant {
-		if ($nameOrConstant instanceof PhpConstant) {
-			$nameOrConstant = $nameOrConstant->getName();
+	public function getConstant(string $name): PhpConstant {
+		if (!$this->constants->has($name)) {
+			throw new \InvalidArgumentException(sprintf('The constant "%s" does not exist.', $name));
 		}
 
-		if (!$this->constants->has($nameOrConstant)) {
-			throw new \InvalidArgumentException(sprintf('The constant "%s" does not exist.', $nameOrConstant));
-		}
-
-		return $this->constants->get($nameOrConstant);
+		return $this->constants->get($name);
 	}
 
 	/**
@@ -147,7 +148,7 @@ trait ConstantsPart {
 	 *
 	 * @return $this
 	 */
-	public function clearConstants() {
+	public function clearConstants(): self {
 		$this->constants->clear();
 
 		return $this;

@@ -1,4 +1,12 @@
-<?php
+<?php declare(strict_types=1);
+/*
+ * This file is part of the php-code-generator package.
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @license Apache-2.0
+ */
+
 namespace gossi\codegen\tests\generator;
 
 use gossi\codegen\generator\comparator\DefaultConstantComparator;
@@ -15,8 +23,7 @@ use PHPUnit\Framework\TestCase;
  * @group generator
  */
 class SortTest extends TestCase {
-
-	public function testDefaultUseStatementComparator() {
+	public function testDefaultUseStatementComparator(): void {
 		$list = new ArrayList();
 
 		$list->add('phootwork\lang\Comparable');
@@ -45,7 +52,7 @@ class SortTest extends TestCase {
 		], $list->toArray());
 	}
 
-	public function testDefaultConstantComparator() {
+	public function testDefaultConstantComparator(): void {
 		$list = new ArrayList();
 
 		$list->add(new PhpConstant('FOO'));
@@ -68,7 +75,7 @@ class SortTest extends TestCase {
 		], $ordered);
 	}
 
-	public function testDefaultMethodComparator() {
+	public function testDefaultMethodComparator(): void {
 		$list = new ArrayList();
 
 		$list->add(PhpMethod::create('moop')->setStatic(true));
@@ -87,7 +94,7 @@ class SortTest extends TestCase {
 		], $ordered);
 	}
 
-	public function testDefaultPropertyComparator() {
+	public function testDefaultPropertyComparator(): void {
 		$list = new ArrayList();
 
 		$list->add(PhpProperty::create('arr')->setVisibility(PhpProperty::VISIBILITY_PRIVATE));
@@ -104,5 +111,4 @@ class SortTest extends TestCase {
 			'baz', 'foo', 'bar', 'arr'
 		], $ordered);
 	}
-
 }

@@ -1,5 +1,11 @@
-<?php
-declare(strict_types=1);
+<?php declare(strict_types=1);
+/*
+ * This file is part of the php-code-generator package.
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @license Apache-2.0
+ */
 
 namespace gossi\codegen\model\parts;
 
@@ -13,78 +19,27 @@ use gossi\codegen\model\PhpConstant;
  * @author Thomas Gossmann
  */
 trait ValuePart {
+	private string|int|float|null|bool|PhpConstant $value = null;
+
+	/** @var bool */
+	private bool $hasValue = false;
 
 	/** @var mixed */
-	private $value;
+	private mixed $expression = null;
 
 	/** @var bool */
-	private $hasValue = false;
-
-	/** @var string */
-	private $expression;
-
-	/** @var bool */
-	private $hasExpression = false;
-
-	/**
-	 * @deprecated use `setValue()` instead
-	 * @param mixed $value
-	 * @return $this
-	 */
-	public function setDefaultValue($value) {
-		return $this->setValue($value);
-	}
-
-	/**
-	 * @deprecated use `unsetValue()` instead
-	 * @return $this
-	 */
-	public function unsetDefaultValue() {
-		return $this->unsetValue();
-	}
-
-	/**
-	 * @deprecated use `getValue()` instead
-	 * @return mixed
-	 */
-	public function getDefaultValue() {
-		return $this->getValue();
-	}
-
-	/**
-	 * @deprecated use `hasValue()` instead
-	 * @return bool
-	 */
-	public function hasDefaultValue(): bool {
-		return $this->hasValue();
-	}
-
-	/**
-	 * Returns whether the given value is a primitive
-	 *
-	 * @param mixed $value
-	 * @return bool
-	 */
-	private function isPrimitive($value): bool {
-		return (is_string($value)
-			|| is_int($value)
-			|| is_float($value)
-			|| is_bool($value)
-			|| is_null($value)
-			|| ($value instanceof PhpConstant));
-	}
+	private bool $hasExpression = false;
 
 	/**
 	 * Sets the value
 	 *
 	 * @param string|int|float|bool|null|PhpConstant $value
+	 *
 	 * @throws \InvalidArgumentException if the value is not an accepted primitve
+	 *
 	 * @return $this
 	 */
-	public function setValue($value) {
-		if (!$this->isPrimitive($value)) {
-			throw new \InvalidArgumentException('Use setValue() only for primitives and PhpConstant, anyway use setExpression() instead.');
-		}
+	public function setValue(string|int|float|null|bool|PhpConstant $value): self {
 		$this->value = $value;
 		$this->hasValue = true;
 
@@ -96,7 +51,7 @@ trait ValuePart {
 	 *
 	 * @return $this
 	 */
-	public function unsetValue() {
+	public function unsetValue(): self {
 		$this->value = null;
 		$this->hasValue = false;
 
@@ -108,7 +63,7 @@ trait ValuePart {
 	 *
 	 * @return string|int|float|bool|null|PhpConstant
 	 */
-	public function getValue() {
+	public function getValue(): string|int|float|bool|null|PhpConstant {
 		return $this->value;
 	}
 
@@ -133,10 +88,11 @@ trait ValuePart {
 	/**
 	 * Sets an expression
 	 *
-	 * @param string $expr
+	 * @param mixed $expr
+	 *
 	 * @return $this
 	 */
-	public function setExpression(string $expr) {
+	public function setExpression(mixed $expr): self {
 		$this->expression = $expr;
 		$this->hasExpression = true;
 
@@ -146,9 +102,9 @@ trait ValuePart {
 	/**
 	 * Returns the expression
 	 *
-	 * @return string
+	 * @return mixed
 	 */
-	public function getExpression(): ?string {
+	public function getExpression(): mixed {
 		return $this->expression;
 	}
 
@@ -157,7 +113,7 @@ trait ValuePart {
 	 *
 	 * @return $this
 	 */
-	public function unsetExpression() {
+	public function unsetExpression(): self {
 		$this->expression = null;
 		$this->hasExpression = false;
 

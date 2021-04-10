@@ -1,5 +1,11 @@
-<?php
-declare(strict_types=1);
+<?php declare(strict_types=1);
+/*
+ * This file is part of the php-code-generator package.
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @license Apache-2.0
+ */
 
 namespace gossi\codegen\model;
 
@@ -9,6 +15,7 @@ use gossi\codegen\parser\FileParser;
 use gossi\codegen\parser\visitor\ConstantParserVisitor;
 use gossi\codegen\parser\visitor\InterfaceParserVisitor;
 use gossi\codegen\parser\visitor\MethodParserVisitor;
+use phootwork\file\exception\FileNotFoundException;
 
 /**
  * Represents a PHP interface.
@@ -16,7 +23,6 @@ use gossi\codegen\parser\visitor\MethodParserVisitor;
  * @author Thomas Gossmann
  */
 class PhpInterface extends AbstractPhpStruct implements GenerateableInterface, ConstantsInterface {
-
 	use ConstantsPart;
 	use InterfacesPart;
 
@@ -24,7 +30,11 @@ class PhpInterface extends AbstractPhpStruct implements GenerateableInterface, C
 	 * Creates a PHP interface from file
 	 *
 	 * @param string $filename
+	 *
+	 * @throws FileNotFoundException
+	 *
 	 * @return PhpInterface
+	 *
 	 */
 	public static function fromFile(string $filename): self {
 		$interface = new self();
@@ -42,7 +52,7 @@ class PhpInterface extends AbstractPhpStruct implements GenerateableInterface, C
 	 *
 	 * @param string $name qualified name
 	 */
-	public function __construct($name = null) {
+	public function __construct(string $name = '') {
 		parent::__construct($name);
 		$this->initConstants();
 		$this->initInterfaces();
@@ -53,9 +63,6 @@ class PhpInterface extends AbstractPhpStruct implements GenerateableInterface, C
 	 */
 	public function generateDocblock(): void {
 		parent::generateDocblock();
-
-		foreach ($this->constants as $constant) {
-			$constant->generateDocblock();
-		}
+		$this->constants->each(fn (string $key, PhpConstant $constant) => $constant->generateDocblock());
 	}
 }

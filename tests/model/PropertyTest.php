@@ -1,18 +1,22 @@
-<?php
+<?php declare(strict_types=1);
+/*
+ * This file is part of the php-code-generator package.
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @license Apache-2.0
+ */
+
 namespace gossi\codegen\tests\model;
 
 use gossi\codegen\model\PhpProperty;
-use gossi\codegen\tests\parts\ValueTests;
 use PHPUnit\Framework\TestCase;
 
 /**
  * @group model
  */
 class PropertyTest extends TestCase {
-
-	use ValueTests;
-
-	public function testSetGetValue() {
+	public function testSetGetValue(): void {
 		$prop = new PhpProperty('needsName');
 
 		$this->assertNull($prop->getValue());
@@ -25,7 +29,7 @@ class PropertyTest extends TestCase {
 		$this->assertFalse($prop->hasValue());
 	}
 
-	public function testSetGetExpression() {
+	public function testSetGetExpression(): void {
 		$prop = new PhpProperty('needsName');
 
 		$this->assertNull($prop->getExpression());
@@ -38,7 +42,7 @@ class PropertyTest extends TestCase {
 		$this->assertFalse($prop->isExpression());
 	}
 
-	public function testValueAndExpression() {
+	public function testValueAndExpression(): void {
 		$prop = new PhpProperty('needsName');
 
 		$prop->setValue('abc');
@@ -48,18 +52,17 @@ class PropertyTest extends TestCase {
 		$this->assertTrue($prop->isExpression());
 	}
 
-	public function testValues() {
-		$this->isValueString(PhpProperty::create('x')->setValue('hello'));
-		$this->isValueInteger(PhpProperty::create('x')->setValue(2));
-		$this->isValueFloat(PhpProperty::create('x')->setValue(0.2));
-		$this->isValueBool(PhpProperty::create('x')->setValue(false));
-		$this->isValueNull(PhpProperty::create('x')->setValue(null));
+	public function testValues(): void {
+		$this->assertIsString(PhpProperty::create('x')->setValue('hello')->getValue());
+		$this->assertIsInt(PhpProperty::create('x')->setValue(2)->getValue());
+		$this->assertIsFloat(PhpProperty::create('x')->setValue(0.2)->getValue());
+		$this->assertIsBool(PhpProperty::create('x')->setValue(false)->getValue());
+		$this->assertNull(PhpProperty::create('x')->setValue(null)->getValue());
 	}
 
-	/**
-	 * @expectedException \InvalidArgumentException
-	 */
-	public function testInvalidValue() {
+	public function testInvalidValue(): void {
+		$this->expectException(\TypeError::class);
+
 		PhpProperty::create('x')->setValue(new \stdClass());
 	}
 }

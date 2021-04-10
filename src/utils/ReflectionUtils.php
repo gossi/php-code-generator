@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /*
  * Copyright 2011 Johannes M. Schmitt <schmittjoh@gmail.com>
  *
@@ -16,30 +16,38 @@
  */
 namespace gossi\codegen\utils;
 
+use ReflectionClass;
+use ReflectionFunctionAbstract;
+use ReflectionMethod;
+
 class ReflectionUtils {
 
 	/**
 	 *
-	 * @param bool $publicOnly        	
+	 * @param ReflectionClass $class
+	 * @param bool $publicOnly
+	 *
+	 * @return ReflectionMethod[]
 	 */
-	public static function getOverrideableMethods(\ReflectionClass $class, $publicOnly = false) {
-		$filter = \ReflectionMethod::IS_PUBLIC;
+	public static function getOverrideableMethods(ReflectionClass $class, bool $publicOnly = false): array {
+		$filter = ReflectionMethod::IS_PUBLIC;
 
 		if (!$publicOnly) {
-			$filter |= \ReflectionMethod::IS_PROTECTED;
+			$filter |= ReflectionMethod::IS_PROTECTED;
 		}
 
-		return array_filter($class->getMethods($filter), function ($method) {
-			return !$method->isFinal() && !$method->isStatic();
-		});
+		return array_filter($class->getMethods($filter), fn ($method) => !$method->isFinal() && !$method->isStatic());
 	}
 
 	/**
 	 *
-	 * @param string $docComment        	
+	 * @param string $docComment
+	 *
+	 * @return string
 	 */
-	public static function getUnindentedDocComment($docComment) {
+	public static function getUnindentedDocComment(string $docComment): string {
 		$lines = explode("\n", $docComment);
+		$docBlock = '';
 		for ($i = 0, $c = count($lines); $i < $c; $i++) {
 			if (0 === $i) {
 				$docBlock = $lines[0] . "\n";
@@ -58,16 +66,18 @@ class ReflectionUtils {
 
 	/**
 	 *
-	 * @param \ReflectionFunctionAbstract $function        	
+	 * @param ReflectionFunctionAbstract $function
+	 *
+	 * @return string
 	 */
-	public static function getFunctionBody(\ReflectionFunctionAbstract $function) {
+	public static function getFunctionBody(ReflectionFunctionAbstract $function): string {
 		$source = file($function->getFileName());
 		$start = $function->getStartLine() - 1;
 		$end = $function->getEndLine();
 		$body = implode('', array_slice($source, $start, $end - $start));
 		$open = strpos($body, '{');
 		$close = strrpos($body, '}');
+
 		return trim(substr($body, $open + 1, (strlen($body) - $close) * -1));
 	}
-
 }

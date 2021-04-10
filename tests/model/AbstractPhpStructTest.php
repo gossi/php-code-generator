@@ -1,4 +1,12 @@
-<?php
+<?php declare(strict_types=1);
+/*
+ * This file is part of the php-code-generator package.
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @license Apache-2.0
+ */
+
 namespace gossi\codegen\tests\model;
 
 use gossi\codegen\model\PhpClass;
@@ -11,8 +19,7 @@ use PHPUnit\Framework\TestCase;
  * @group model
  */
 class AbstractPhpStructTest extends TestCase {
-
-	public function testCreate() {
+	public function testCreate(): void {
 		$class = PhpClass::create();
 		$this->assertTrue($class instanceof PhpClass);
 
@@ -23,9 +30,9 @@ class AbstractPhpStructTest extends TestCase {
 		$this->assertTrue($trait instanceof PhpTrait);
 	}
 
-	public function testQualifiedName() {
+	public function testQualifiedName(): void {
 		$class = new PhpClass();
-		$this->assertNull($class->getName());
+		$this->assertEmpty($class->getName());
 
 		$class = new PhpClass('foo');
 		$this->assertEquals('foo', $class->getName());
@@ -43,7 +50,7 @@ class AbstractPhpStructTest extends TestCase {
 		$this->assertEquals('a\b\Name', $class->getQualifiedName());
 	}
 
-	public function testUseStatements() {
+	public function testUseStatements(): void {
 		$class = new PhpClass();
 
 		$this->assertTrue($class->getUseStatements()->isEmpty());
@@ -82,7 +89,7 @@ class AbstractPhpStructTest extends TestCase {
 		$this->assertTrue($class->hasUseStatement('phootwork\collection\Map'));
 	}
 
-	public function testMethods() {
+	public function testMethods(): void {
 		$class = new PhpClass();
 
 		$this->assertTrue($class->getMethods()->isEmpty());
@@ -107,7 +114,7 @@ class AbstractPhpStructTest extends TestCase {
 		], $class->getMethods()->toArray());
 		$this->assertEquals(['foo', 'bar'], $class->getMethodNames()->toArray());
 		$this->assertNull($orphaned->getParent());
-		$this->assertSame($method, $class->getMethod($method));
+		$this->assertSame($method, $class->getMethod($method->getName()));
 		$this->assertTrue($class->hasMethod($method));
 		$this->assertSame($class, $class->removeMethod($method));
 		$this->assertFalse($class->hasMethod($method));
@@ -123,23 +130,20 @@ class AbstractPhpStructTest extends TestCase {
 		}
 	}
 
-	/**
-	 * @expectedException \InvalidArgumentException
-	 */
-	public function testRemoveMethodThrowsExceptionWhenConstantDoesNotExist() {
+	public function testRemoveMethodThrowsExceptionWhenConstantDoesNotExist(): void {
+		$this->expectException(\InvalidArgumentException::class);
 		$class = new PhpClass();
 		$class->removeMethod('foo');
 	}
 
-	/**
-	 * @expectedException \InvalidArgumentException
-	 */
-	public function testGetMethodThrowsExceptionWhenConstantDoesNotExist() {
+	public function testGetMethodThrowsExceptionWhenConstantDoesNotExist(): void {
+		$this->expectException(\InvalidArgumentException::class);
+
 		$class = new PhpClass();
 		$class->getMethod('foo');
 	}
 
-	public function testDocblock() {
+	public function testDocblock(): void {
 		$class = new PhpClass();
 
 		$this->assertNotNull($class->getDocblock());
@@ -147,7 +151,7 @@ class AbstractPhpStructTest extends TestCase {
 		$this->assertEquals('foo', $class->getDocblock()->getShortDescription());
 	}
 
-	public function testRequiredFiles() {
+	public function testRequiredFiles(): void {
 		$class = new PhpClass();
 
 		$this->assertEquals([], $class->getRequiredFiles()->toArray());

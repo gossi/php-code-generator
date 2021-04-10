@@ -1,10 +1,17 @@
-<?php
-declare(strict_types=1);
+<?php declare(strict_types=1);
+/*
+ * This file is part of the php-code-generator package.
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @license Apache-2.0
+ */
 
 namespace gossi\codegen\model\parts;
 
 use gossi\docblock\Docblock;
-use gossi\docblock\tags\AbstractTag;
+use gossi\docblock\tags\ReturnTag;
+use gossi\docblock\tags\VarTag;
 
 /**
  * Type docblock generator part
@@ -27,21 +34,21 @@ trait TypeDocblockGeneratorPart {
 	 *
 	 * @return string
 	 */
-	abstract public function getType(): ?string;
+	abstract public function getType(): string;
 
 	/**
 	 * Returns the type description
 	 *
 	 * @return string
 	 */
-	abstract public function getTypeDescription(): ?string;
+	abstract public function getTypeDescription(): string;
 
 	/**
 	 * Generates a type tag (return or var) but checks if one exists and updates this one
 	 *
-	 * @param AbstractTag $tag
+	 * @param ReturnTag|VarTag $tag
 	 */
-	protected function generateTypeTag(AbstractTag $tag) {
+	protected function generateTypeTag(ReturnTag|VarTag $tag): void {
 		$docblock = $this->getDocblock();
 		$type = $this->getType();
 
@@ -51,14 +58,14 @@ trait TypeDocblockGeneratorPart {
 			$tags = $docblock->getTags($tag->getTagName());
 			if ($tags->size() > 0) {
 				$ttag = $tags->get(0);
-				$ttag->setType($this->getType());
+				$ttag->setType($this->getType() . ($this->getNullable() ? '|null' : ''));
 				$ttag->setDescription($this->getTypeDescription());
 			}
 
 			// ... anyway create and append
 			else {
 				$docblock->appendTag($tag
-					->setType($this->getType())
+					->setType($this->getType() . ($this->getNullable() ? '|null' : ''))
 					->setDescription($this->getTypeDescription())
 				);
 			}

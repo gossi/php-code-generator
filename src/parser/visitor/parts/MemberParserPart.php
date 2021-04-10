@@ -1,48 +1,33 @@
-<?php
+<?php declare(strict_types=1);
+/*
+ * This file is part of the php-code-generator package.
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @license Apache-2.0
+ */
+
 namespace gossi\codegen\parser\visitor\parts;
 
 use gossi\codegen\model\AbstractPhpMember;
-use gossi\codegen\model\PhpConstant;
-use PhpParser\Comment\Doc;
-use PhpParser\Node;
+use PhpParser\Node\Stmt\ClassConst;
+use PhpParser\Node\Stmt\ClassMethod;
+use PhpParser\Node\Stmt\Property;
 
 trait MemberParserPart {
 
 	/**
-	 *
-	 * @param AbstractPhpMember|PhpConstant $member
-	 * @param Doc $doc
-	 */
-	private function parseMemberDocblock(&$member, Doc $doc = null) {
-		if ($doc !== null) {
-			$member->setDocblock($doc->getReformattedText());
-			$docblock = $member->getDocblock();
-			$member->setDescription($docblock->getShortDescription());
-			$member->setLongDescription($docblock->getLongDescription());
-
-			$vars = $docblock->getTags('var');
-			if ($vars->size() > 0) {
-				$var = $vars->get(0);
-				$member->setType($var->getType(), $var->getDescription());
-			}
-		}
-	}
-
-	/**
 	 * Returns the visibility from a node
 	 *
-	 * @param Node $node
+	 * @param ClassMethod|ClassConst|Property $node
+	 *
 	 * @return string
 	 */
-	private function getVisibility(Node $node) {
-		if ($node->isPrivate()) {
-			return AbstractPhpMember::VISIBILITY_PRIVATE;
-		}
-
-		if ($node->isProtected()) {
-			return AbstractPhpMember::VISIBILITY_PROTECTED;
-		}
-
-		return AbstractPhpMember::VISIBILITY_PUBLIC;
+	private function getVisibility(ClassMethod|ClassConst|Property $node): string {
+		return match (true) {
+			$node->isPrivate() => AbstractPhpMember::VISIBILITY_PRIVATE,
+			$node->isProtected() => AbstractPhpMember::VISIBILITY_PROTECTED,
+			default => AbstractPhpMember::VISIBILITY_PUBLIC
+		};
 	}
 }

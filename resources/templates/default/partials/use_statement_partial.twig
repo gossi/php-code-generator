@@ -1,0 +1,3 @@
+{% for alias, namespace in model.useStatements -%}
+	use {{ namespace }}{% if namespace|commonName != alias %} as {{ alias }}{% endif %};
+{% endfor %}
