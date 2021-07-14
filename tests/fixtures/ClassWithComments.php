@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 namespace gossi\codegen\tests\fixtures;
 
 /**
@@ -7,6 +7,7 @@ namespace gossi\codegen\tests\fixtures;
  * Here is a super dooper long-description
  * 
  * @author gossi
+ *
  * @since 0.2
  */
 class ClassWithComments {
@@ -36,6 +37,7 @@ class ClassWithComments {
 	 * 
 	 * @param bool $moo makes a cow
 	 * @param string $foo makes a fow
+	 *
 	 * @return bool true on success and false if it fails
 	 */
 	public function setup($moo, $foo = 'test123') {

@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 namespace gossi\codegen\tests\fixtures;
 
 /**
@@ -9,5 +9,4 @@ interface DummyInterface {
 	/**
 	 */
 	public function foo();
-
 }

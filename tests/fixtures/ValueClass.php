@@ -1,8 +1,7 @@
-<?php
+<?php declare(strict_types=1);
 namespace gossi\codegen\tests\fixtures;
 
 class ValueClass {
-
 	const CONST_STRING = 'foo';
 	const CONST_INTEGER = 10;
 	const CONST_FLOAT = 7.5;

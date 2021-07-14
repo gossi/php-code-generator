@@ -1,34 +1,42 @@
-<?php
-declare(strict_types=1);
+<?php declare(strict_types=1);
+/*
+ * This file is part of the php-code-generator package.
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @license Apache-2.0
+ */
 
 namespace gossi\codegen\parser;
 
 use gossi\codegen\parser\visitor\ParserVisitorInterface;
 use phootwork\collection\Set;
-use phootwork\file\exception\FileNotFoundException;
+use phootwork\file\exception\FileException;
 use phootwork\file\File;
 use PhpParser\Node;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitorAbstract;
 use PhpParser\Parser;
+use PhpParser\ParserFactory;
 
 class FileParser extends NodeVisitorAbstract {
+	private Set $visitors;
+	private File $file;
 
-	private $visitors;
-	private $filename;
-
-	public function __construct($filename) {
-		$this->filename = $filename;
+	public function __construct(string $filename) {
+		$this->file = new File($filename);
 		$this->visitors = new Set();
 	}
 
-	public function addVisitor(ParserVisitorInterface $visitor) {
+	public function addVisitor(ParserVisitorInterface $visitor): self {
 		$this->visitors->add($visitor);
+
 		return $this;
 	}
 
-	public function removeVisitor(ParserVisitorInterface $visitor) {
+	public function removeVisitor(ParserVisitorInterface $visitor): self {
 		$this->visitors->remove($visitor);
+
 		return $this;
 	}
 
@@ -37,27 +45,22 @@ class FileParser extends NodeVisitorAbstract {
 	}
 
 	/**
-	 * @throws FileNotFoundException
+	 * @throws FileException If not existent or not readable file
 	 */
-	public function parse() {
-		$file = new File($this->filename);
-
-		if (!$file->exists()) {
-			throw new FileNotFoundException(sprintf('File (%s) does not exist.', $this->filename));
-		}
-
+	public function parse(): void {
 		$parser = $this->getParser();
 		$traverser = new NodeTraverser();
 		$traverser->addVisitor($this);
-		$traverser->traverse($parser->parse($file->read()));
+		$traverser->traverse($parser->parse((string) $this->file->read()));
 	}
 
 	private function getParser(): Parser {
-		$factory = new \PhpParser\ParserFactory();
-		return $factory->create(\PhpParser\ParserFactory::PREFER_PHP7);
+		$factory = new ParserFactory();
+
+		return $factory->create(ParserFactory::PREFER_PHP7);
 	}
 
-	public function enterNode(Node $node) {
+	public function enterNode(Node $node): void {
 		foreach ($this->visitors as $visitor) {
 			switch ($node->getType()) {
 				case 'Stmt_Namespace':

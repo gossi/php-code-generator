@@ -1,8 +1,7 @@
-<?php
+<?php declare(strict_types=1);
 namespace gossi\codegen\tests\fixtures;
 
 abstract class OverridableReflectionTest {
-
 	public function a() {
 	}
 

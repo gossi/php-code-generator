@@ -1,8 +1,7 @@
-<?php
+<?php declare(strict_types=1);
 namespace gossi\codegen\tests\fixtures;
 
 class ClassWithValues {
-
 	private $arr = ['papagei' => ['name' => 'Mr. Cottons Papagei']];
 	private $bar = false;
 	private $baz = true;
